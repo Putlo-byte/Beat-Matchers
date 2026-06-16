@@ -4,6 +4,9 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>BPM Match — Real Songs Tempo Game</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <style>
   :root {
     --bg0: #0b0f1a; --bg1: #141a2e;
@@ -176,6 +179,149 @@
   .finalWinner { font-size: 32px; font-weight: 800; margin-bottom: 8px; letter-spacing: -.5px; }
   .finalScores { font-size: 16px; color: var(--muted); margin-bottom: 20px; }
   .finalScores b { font-size: 20px; }
+
+  /* ============================================================
+     RETRO SKIN — 80s silver/black hi-fi receiver
+     (appended last; wins on source order)
+     ============================================================ */
+  :root{
+    --bg0:#171311; --bg1:#0a0807;
+    --text:#ece6d8; --muted:#9c8f7b;
+    --accent:#ff9a2e; --accent2:#5bd06a;
+    --good:#62d674; --warn:#ffb52e; --bad:#ff5b4d;
+    --stroke: rgba(0,0,0,0.55); --card: rgba(0,0,0,0.28);
+    --shadow: 0 22px 60px rgba(0,0,0,.7);
+    --wood1:#8a5a30; --wood2:#5b3a1e; --wood3:#43290f;
+    --led:#ff9a2e; --ledglow: rgba(255,154,46,.55);
+  }
+  body{
+    overflow-x: hidden;
+    font-family: 'Oswald', system-ui, sans-serif;
+    background:
+      radial-gradient(1100px 600px at 50% -10%, #2a2018 0%, transparent 60%),
+      repeating-linear-gradient(90deg, rgba(0,0,0,.18) 0 3px, rgba(255,255,255,.012) 3px 6px),
+      linear-gradient(180deg, #1b1512, #0a0706);
+  }
+  /* brushed-metal faceplate with corner screws */
+  .app{
+    position: relative; border-radius: 8px; border: 1px solid #000; backdrop-filter: none;
+    padding: 30px 30px 32px;
+    background:
+      radial-gradient(circle at 17px 17px, #74787e 0 2px, #1a1b1d 2.6px 4px, transparent 4.6px),
+      radial-gradient(circle at calc(100% - 17px) 17px, #74787e 0 2px, #1a1b1d 2.6px 4px, transparent 4.6px),
+      radial-gradient(circle at 17px calc(100% - 17px), #74787e 0 2px, #1a1b1d 2.6px 4px, transparent 4.6px),
+      radial-gradient(circle at calc(100% - 17px) calc(100% - 17px), #74787e 0 2px, #1a1b1d 2.6px 4px, transparent 4.6px),
+      repeating-linear-gradient(90deg, rgba(255,255,255,.045) 0 1px, transparent 1px 4px),
+      linear-gradient(180deg, #3c3f45, #2b2d31 60%, #212327);
+    box-shadow: var(--shadow), inset 0 1px 0 rgba(255,255,255,.12), inset 0 -2px 6px rgba(0,0,0,.6);
+  }
+  /* wood end caps */
+  .app::before, .app::after{
+    content:""; position:absolute; top:-6px; bottom:-6px; width:15px; border-radius:4px;
+    background:
+      repeating-linear-gradient(94deg, rgba(0,0,0,.22) 0 2px, transparent 2px 7px),
+      linear-gradient(180deg, var(--wood1), var(--wood2) 55%, var(--wood3));
+    box-shadow: 0 8px 20px rgba(0,0,0,.6), inset 0 0 8px rgba(0,0,0,.5);
+  }
+  .app::before{ left:-15px; } .app::after{ right:-15px; }
+
+  /* brand plate */
+  header{ border-bottom:1px solid rgba(0,0,0,.55); box-shadow:0 1px 0 rgba(255,255,255,.06); padding-bottom:16px; }
+  .logo{
+    border-radius:50%; border:2px solid #15161a; color:var(--led); font-size:18px; text-shadow:0 0 8px var(--ledglow);
+    background: radial-gradient(circle at 38% 32%, #6b6f76, #2a2c30 72%);
+    box-shadow: inset 0 2px 3px rgba(255,255,255,.25), inset 0 -3px 6px rgba(0,0,0,.6), 0 2px 4px rgba(0,0,0,.5);
+  }
+  h1{ font-family:'Oswald'; font-weight:700; letter-spacing:3px; text-transform:uppercase; font-size:23px;
+      color:#f0ead8; text-shadow:0 1px 0 #000, 0 -1px 0 rgba(255,255,255,.12); }
+  .sub{ font-family:'Share Tech Mono', monospace; color:var(--led); font-size:10.5px; letter-spacing:1.5px; text-transform:uppercase; opacity:.85; }
+
+  /* LED counter windows */
+  .stat{ background:linear-gradient(180deg,#090a0b,#15161a); border:1px solid #000; border-radius:5px; box-shadow:inset 0 2px 6px rgba(0,0,0,.85); padding:7px 12px; }
+  .stat b{ font-family:'Share Tech Mono', monospace; color:var(--led); text-shadow:0 0 9px var(--ledglow); font-size:20px; }
+  .stat span{ font-family:'Oswald'; color:#7d7468; }
+
+  /* preset / playlist chips */
+  .chip{ font-family:'Oswald'; text-transform:uppercase; letter-spacing:1px; font-size:12px; color:#cfc7b6; border-radius:4px; border:1px solid #000;
+    background:linear-gradient(180deg,#3c3f44,#26282c); box-shadow:inset 0 1px 0 rgba(255,255,255,.12), 0 2px 4px rgba(0,0,0,.4); }
+  .chip:hover{ border-color:#000; filter:brightness(1.1); }
+  .chip.active{ color:var(--led); border-top:2px solid var(--led); text-shadow:0 0 6px var(--ledglow);
+    background:linear-gradient(180deg,#46401f,#2a2614); }
+
+  /* recessed display panel */
+  .stage{ background:linear-gradient(180deg,#0a0c0e,#070809); border:1px solid #000; border-radius:6px;
+    box-shadow: inset 0 2px 12px rgba(0,0,0,.85), inset 0 0 0 1px rgba(255,255,255,.02); }
+  .nowLabel{ font-family:'Oswald'; color:var(--led); letter-spacing:2.5px; text-shadow:0 0 6px var(--ledglow); }
+  .songTitle{ font-family:'Oswald'; font-weight:600; color:#f4eeda; letter-spacing:.5px; }
+  .songArtist{ font-family:'Share Tech Mono', monospace; color:var(--muted); font-size:12px; }
+  .loadNote{ font-family:'Share Tech Mono', monospace; color:var(--led); }
+  .disc{ border:2px solid #0a0a0a; box-shadow:0 8px 22px rgba(0,0,0,.7), inset 0 0 0 6px rgba(255,255,255,.04); }
+  .spindle{ background:#2a2c30; border-color:#45484d; }
+
+  /* countdown gauge */
+  .ring-bg{ stroke: rgba(255,255,255,.07); }
+  .ring-fg{ stroke: var(--led); filter: drop-shadow(0 0 4px var(--ledglow)); }
+  .timer-num{ font-family:'Share Tech Mono', monospace; color:var(--led); text-shadow:0 0 9px var(--ledglow); }
+  .timer.warn .ring-fg{ stroke:var(--warn); } .timer.warn .timer-num{ color:var(--warn); }
+  .timer.danger .ring-fg{ stroke:var(--bad); } .timer.danger .timer-num{ color:var(--bad); }
+
+  /* metal pitch fader */
+  .sliderLabels{ font-family:'Oswald'; letter-spacing:1.5px; text-transform:uppercase; color:#8d8475; }
+  input[type=range]{ height:16px; border-radius:3px; box-shadow: inset 0 2px 6px rgba(0,0,0,.85), inset 0 0 0 1px #000;
+    background: linear-gradient(90deg, rgba(255,154,46,.55) 0%, rgba(255,154,46,.55) var(--p,50%), rgba(0,0,0,.55) var(--p,50%)), #0c0c0e; }
+  input[type=range]::-webkit-slider-thumb{ width:26px; height:36px; border-radius:4px; border:1px solid #08090a;
+    background:
+      linear-gradient(180deg, transparent 45%, var(--led) 45%, var(--led) 55%, transparent 55%),
+      linear-gradient(180deg,#5c6066,#33353a 50%,#202227);
+    box-shadow:0 4px 8px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.35); }
+  input[type=range]::-moz-range-thumb{ width:26px; height:36px; border-radius:4px; border:1px solid #08090a;
+    background:
+      linear-gradient(180deg, transparent 45%, var(--led) 45%, var(--led) 55%, transparent 55%),
+      linear-gradient(180deg,#5c6066,#33353a 50%,#202227); }
+  input[type=range].ticking::-webkit-slider-thumb{ transform:scale(1.06); box-shadow:0 0 0 4px rgba(255,154,46,.22), 0 4px 8px rgba(0,0,0,.6); }
+  input[type=range].ticking::-moz-range-thumb{ box-shadow:0 0 0 4px rgba(255,154,46,.22); }
+
+  /* engraved metal buttons */
+  button.btn{ font-family:'Oswald'; font-weight:600; letter-spacing:1.6px; text-transform:uppercase; color:#e9e3d6; border-radius:5px; border:1px solid #08090a;
+    background:linear-gradient(180deg,#494d53,#2c2e33 55%,#232529);
+    box-shadow:0 3px 0 #131416, 0 5px 10px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.18); text-shadow:0 1px 0 #000; }
+  button.btn:hover{ filter:brightness(1.1); transform:translateY(-1px); }
+  button.btn:active{ transform:translateY(2px); box-shadow:0 1px 0 #131416, inset 0 1px 3px rgba(0,0,0,.6); }
+  .btn.play, .btn.lock, .btn.next, .btn.ghost{ color:#e9e3d6; background:linear-gradient(180deg,#494d53,#2c2e33 55%,#232529); }
+  .btn.play{ border-top:2px solid var(--led); }
+  .btn.lock{ border-top:2px solid var(--bad); }
+  .btn.next{ border-top:2px solid var(--good); }
+  kbd{ font-family:'Share Tech Mono', monospace; background:#15161a; border-color:#000; color:var(--led); }
+
+  /* result display window */
+  .result{ background:linear-gradient(180deg,#0a0c0e,#070809); border:1px solid #000; border-radius:6px; box-shadow:inset 0 2px 12px rgba(0,0,0,.85); }
+  .result .verdict{ font-family:'Share Tech Mono', monospace; text-shadow:0 0 14px currentColor; }
+  .result .detail{ font-family:'Share Tech Mono', monospace; }
+
+  /* menu / queue */
+  .menuTitle{ font-family:'Oswald'; letter-spacing:3px; color:var(--led); text-shadow:0 0 8px var(--ledglow); }
+  .modeBtn{ border-radius:6px; border:1px solid #08090a; color:var(--text);
+    background:linear-gradient(180deg,#3c3f45,#26282c);
+    box-shadow:0 4px 0 #131416, 0 6px 12px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.15); }
+  .modeBtn:hover{ transform:translateY(-2px); border-top:2px solid var(--led); }
+  .modeBtn .mName{ font-family:'Oswald'; letter-spacing:2px; text-transform:uppercase; }
+  .modeBtn .mDesc{ color:var(--muted); font-family:system-ui, sans-serif; }
+  .qSpinner{ border-top-color:var(--led); }
+  .qTitle{ font-family:'Oswald'; letter-spacing:2px; text-transform:uppercase; }
+  .qSub{ font-family:'Share Tech Mono', monospace; }
+
+  /* multiplayer scoreboard + reveal */
+  #mpScore{ background:linear-gradient(180deg,#0a0c0e,#070809); border:1px solid #000; box-shadow:inset 0 2px 8px rgba(0,0,0,.8); }
+  .mpTeam b{ font-family:'Share Tech Mono', monospace; text-shadow:0 0 9px currentColor; }
+  .mpTeam span, .mpRoundLabel{ font-family:'Oswald'; letter-spacing:1.5px; text-transform:uppercase; }
+  .revealTrack{ background:linear-gradient(180deg,#0a0c0e,#15161a); border:1px solid #000; box-shadow:inset 0 2px 6px rgba(0,0,0,.8); }
+  .revCol .acc, .finalScores b{ font-family:'Share Tech Mono', monospace; text-shadow:0 0 8px currentColor; }
+  .revCol .who, .revWinner, .finalWinner, .revLabels{ font-family:'Oswald'; letter-spacing:1px; text-transform:uppercase; }
+
+  /* paragraphs stay readable */
+  .hint{ font-family:system-ui, sans-serif; color:var(--muted); }
+  .setupNote{ font-family:system-ui, sans-serif; }
+  .credit{ font-family:'Share Tech Mono', monospace; color:#6b6356; }
 </style>
 </head>
 <body>
@@ -186,7 +332,7 @@
       <div class="logo">🎚️</div>
       <div>
         <h1>BPM Match</h1>
-        <div class="sub">Real songs, wrong speed. Slide until it sounds right — by ear.</div>
+        <div class="sub">Stereo Tempo Matcher · Model BPM-88</div>
       </div>
     </div>
     <div class="stats">
