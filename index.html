@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>BPM Match — Real Songs Tempo Game</title>
+<style>
+  :root {
+    --bg0: #0b0f1a; --bg1: #141a2e;
+    --card: rgba(255,255,255,0.04); --stroke: rgba(255,255,255,0.10);
+    --text: #eef2ff; --muted: #93a0c4;
+    --accent: #6ee7ff; --accent2: #a78bfa;
+    --good: #4ade80; --warn: #fbbf24; --bad: #fb7185;
+    --shadow: 0 20px 60px rgba(0,0,0,0.45);
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0; color: var(--text);
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background:
+      radial-gradient(1200px 700px at 15% -10%, #1b2547 0%, transparent 55%),
+      radial-gradient(1000px 600px at 100% 0%, #2a1740 0%, transparent 50%),
+      linear-gradient(160deg, var(--bg0), var(--bg1));
+    min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 28px 16px;
+  }
+  .app {
+    width: 100%; max-width: 720px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+    border: 1px solid var(--stroke); border-radius: 22px; box-shadow: var(--shadow);
+    padding: 26px 26px 30px; backdrop-filter: blur(8px);
+  }
+  header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .title { display: flex; align-items: center; gap: 12px; }
+  .logo {
+    width: 42px; height: 42px; border-radius: 12px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    display: grid; place-items: center; font-size: 22px; box-shadow: 0 8px 24px rgba(110,231,255,0.25);
+  }
+  h1 { font-size: 19px; margin: 0; letter-spacing: 0.3px; }
+  .sub { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+  .stats { display: flex; gap: 10px; }
+  .stat { background: var(--card); border: 1px solid var(--stroke); border-radius: 12px; padding: 8px 12px; text-align: center; min-width: 64px; }
+  .stat b { display: block; font-size: 18px; line-height: 1.1; }
+  .stat span { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; }
+
+  .track-row { display: flex; gap: 10px; margin: 20px 0 18px; flex-wrap: wrap; }
+  .chip {
+    border: 1px solid var(--stroke); background: var(--card); color: var(--text);
+    padding: 8px 14px; border-radius: 999px; cursor: pointer; font-size: 13px; transition: .15s; user-select: none;
+  }
+  .chip:hover { border-color: var(--accent); }
+  .chip.active { background: linear-gradient(135deg, rgba(110,231,255,0.22), rgba(167,139,250,0.22)); border-color: var(--accent); }
+
+  .stage { display: flex; align-items: center; gap: 20px; border: 1px solid var(--stroke); border-radius: 16px;
+    background: rgba(0,0,0,0.25); padding: 20px; margin-bottom: 18px; min-height: 132px; }
+  .vinyl { position: relative; width: 96px; height: 96px; flex: 0 0 96px; }
+  .disc {
+    width: 96px; height: 96px; border-radius: 50%;
+    background: #0a0a0a; border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 8px 22px rgba(0,0,0,0.5), inset 0 0 0 8px rgba(255,255,255,0.03);
+    overflow: hidden; will-change: transform;
+  }
+  .disc img { width: 100%; height: 100%; object-fit: cover; opacity: .92;
+    -webkit-mask-image: radial-gradient(circle, transparent 12px, #000 13px);
+            mask-image: radial-gradient(circle, transparent 12px, #000 13px); }
+  .disc .placeholder { width:100%; height:100%; display:grid; place-items:center; font-size:34px; color:#33405f; }
+  .spindle { position:absolute; top:50%; left:50%; width:10px; height:10px; border-radius:50%;
+    background:#1b2440; border:2px solid #2c3a63; transform:translate(-50%,-50%); }
+  .nowInfo { flex: 1; min-width: 0; }
+  .nowLabel { font-size: 10.5px; letter-spacing: .8px; color: var(--muted); text-transform: uppercase; }
+  .songTitle { font-size: 20px; font-weight: 800; margin: 3px 0 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .songArtist { font-size: 14px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .loadNote { font-size: 12px; color: var(--accent); margin-top: 8px; min-height: 16px; }
+  .timer { position: relative; width: 72px; height: 72px; flex: 0 0 72px; }
+  .timer svg { width: 72px; height: 72px; transform: rotate(-90deg); }
+  .ring-bg { fill: none; stroke: rgba(255,255,255,0.08); stroke-width: 7; }
+  .ring-fg { fill: none; stroke: var(--accent); stroke-width: 7; stroke-linecap: round;
+    transition: stroke-dashoffset .25s linear, stroke .3s; }
+  .timer-num { position: absolute; inset: 0; display: grid; place-items: center; font-size: 20px; font-weight: 800; }
+  .timer.warn .ring-fg { stroke: var(--warn); } .timer.warn .timer-num { color: var(--warn); }
+  .timer.danger .ring-fg { stroke: var(--bad); } .timer.danger .timer-num { color: var(--bad); animation: blink .6s infinite; }
+  @keyframes blink { 50% { opacity: .35; } }
+
+  .sliderWrap { margin: 6px 0 4px; }
+  .sliderLabels { display:flex; justify-content:space-between; font-size:12px; color:var(--muted); margin-bottom:10px; }
+  input[type=range] {
+    -webkit-appearance: none; appearance: none; width: 100%; height: 14px; border-radius: 999px; outline: none; cursor: pointer;
+    background: linear-gradient(90deg, var(--accent) 0%, var(--accent2) var(--p,50%), rgba(255,255,255,0.08) var(--p,50%));
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none; width: 32px; height: 32px; border-radius: 50%;
+    background: #fff; border: 3px solid var(--accent2); cursor: grab; box-shadow: 0 6px 18px rgba(0,0,0,0.5);
+    transition: transform .06s ease, box-shadow .06s ease;
+  }
+  input[type=range]::-webkit-slider-thumb:active { cursor: grabbing; transform: scale(1.08); }
+  input[type=range].ticking::-webkit-slider-thumb {
+    transform: scale(1.16); box-shadow: 0 0 0 7px rgba(167,139,250,0.22), 0 6px 18px rgba(0,0,0,0.5);
+  }
+  input[type=range].ticking::-moz-range-thumb { transform: scale(1.16); box-shadow: 0 0 0 7px rgba(167,139,250,0.22); }
+  input[type=range]::-moz-range-thumb { width: 32px; height: 32px; border-radius: 50%; background: #fff; border: 3px solid var(--accent2); cursor: grab; }
+  input[type=range]:disabled { opacity: .45; cursor: not-allowed; }
+
+  .controls { display: flex; gap: 12px; margin-top: 22px; flex-wrap: wrap; }
+  button.btn { flex: 1; min-width: 130px; border: none; border-radius: 14px; padding: 14px 16px; font-size: 15px; font-weight: 700; cursor: pointer; color: #0b0f1a; transition: .15s; }
+  .btn.play { background: linear-gradient(135deg, var(--accent), #38bdf8); }
+  .btn.lock { background: linear-gradient(135deg, var(--accent2), #f0abfc); }
+  .btn.next { background: linear-gradient(135deg, var(--good), #34d399); }
+  button.btn:hover { filter: brightness(1.08); transform: translateY(-1px); }
+  button.btn:disabled { opacity: .45; cursor: not-allowed; transform: none; filter: none; }
+
+  .result { margin-top: 20px; border-radius: 16px; padding: 16px 18px; text-align: center; border: 1px solid var(--stroke); background: var(--card); display: none; }
+  .result.show { display: block; animation: pop .3s ease; }
+  @keyframes pop { from { transform: scale(.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .result .verdict { font-size: 40px; font-weight: 800; margin-bottom: 4px; letter-spacing: -1px; font-variant-numeric: tabular-nums; }
+  .result .detail { font-size: 13px; color: var(--muted); }
+  .result .detail b { color: var(--text); }
+
+  .hint { margin-top: 18px; font-size: 12px; color: var(--muted); text-align: center; line-height: 1.6; }
+  kbd { background: rgba(255,255,255,0.08); border:1px solid var(--stroke); border-radius:5px; padding:1px 6px; font-size:11px; }
+  .credit { margin-top: 10px; font-size: 10.5px; color: #5b698f; text-align: center; }
+  #fx { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 60; display: none; }
+  .result.perfect { border-color: var(--good); box-shadow: 0 0 40px rgba(74,222,128,0.35); animation: pop .3s ease, celebrate 1.2s ease infinite; }
+  @keyframes celebrate { 0%,100% { box-shadow: 0 0 30px rgba(74,222,128,0.25);} 50% { box-shadow: 0 0 55px rgba(110,231,255,0.5);} }
+</style>
+</head>
+<body>
+<canvas id="fx"></canvas>
+<div class="app">
+  <header>
+    <div class="title">
+      <div class="logo">🎚️</div>
+      <div>
+        <h1>BPM Match</h1>
+        <div class="sub">Real songs, wrong speed. Slide until it sounds right — by ear.</div>
+      </div>
+    </div>
+    <div class="stats">
+      <div class="stat"><b id="score">0</b><span>Score</span></div>
+      <div class="stat"><b id="streak">0</b><span>Streak</span></div>
+      <div class="stat"><b id="round">1</b><span>Song</span></div>
+    </div>
+  </header>
+
+  <div class="track-row" id="trackRow"></div>
+
+  <div class="stage">
+    <div class="vinyl">
+      <div class="disc" id="disc"><div class="placeholder">🎵</div></div>
+      <div class="spindle"></div>
+    </div>
+    <div class="nowInfo">
+      <div class="nowLabel">Now playing</div>
+      <div class="songTitle" id="songTitle">—</div>
+      <div class="songArtist" id="songArtist">Pick a playlist to start</div>
+      <div class="loadNote" id="loadNote"></div>
+    </div>
+    <div class="timer" id="timer" title="Time left before auto Lock In">
+      <svg viewBox="0 0 72 72"><circle class="ring-bg" cx="36" cy="36" r="32"/><circle class="ring-fg" id="ringFg" cx="36" cy="36" r="32"/></svg>
+      <div class="timer-num" id="timerNum">20</div>
+    </div>
+  </div>
+
+  <div class="sliderWrap">
+    <div class="sliderLabels"><span>🐢 Slower</span><span>Faster 🐇</span></div>
+    <input type="range" id="slider" min="0" max="100" step="0.5" value="50" disabled />
+  </div>
+
+  <div class="controls">
+    <button class="btn play" id="playBtn" disabled>▶ Play</button>
+    <button class="btn lock" id="lockBtn" disabled>🔒 Lock In</button>
+    <button class="btn next" id="nextBtn">Next Song →</button>
+  </div>
+
+  <div class="result" id="result">
+    <div class="verdict" id="verdict"></div>
+    <div class="detail" id="detail"></div>
+  </div>
+
+  <div class="hint">
+    The song is playing at the <b>wrong tempo</b>. There's no meter and no hint — trust your memory of how the
+    track actually goes, slide until it feels right, then <kbd>Lock In</kbd>. <kbd>←</kbd> <kbd>→</kbd> fine-tune.
+  </div>
+  <div class="credit">30-second song previews provided by the Apple / iTunes Search API.</div>
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  // ---------- Playlists = pools of popular artists ----------
+  // Each round picks a random artist, pulls their top tracks live from the iTunes
+  // API, and grabs a random one — so the song pool is effectively endless and
+  // rarely repeats (a recently-played list also blocks short-term repeats).
+  const PLAYLISTS = [
+    { name: "🔥 Big Hits", artists: [
+      "The Weeknd","Harry Styles","Dua Lipa","Billie Eilish","Taylor Swift","Olivia Rodrigo",
+      "Ed Sheeran","Bruno Mars","Justin Bieber","Doja Cat","Sabrina Carpenter","SZA",
+      "Post Malone","Ariana Grande","Drake","Miley Cyrus","Lil Nas X","Glass Animals",
+      "Travis Scott","Bad Bunny","Harry Styles","Tate McRae","Benson Boone","Chappell Roan",
+    ]},
+    { name: "🕺 2010s", artists: [
+      "Adele","Daft Punk","Pharrell Williams","Lorde","OneRepublic","Imagine Dragons",
+      "Maroon 5","Sia","The Chainsmokers","Calvin Harris","Sam Smith","Lana Del Rey",
+      "Kendrick Lamar","Macklemore","Avicii","Ellie Goulding","Bastille","Fun",
+      "Florence and the Machine","Hozier","The 1975","Twenty One Pilots",
+    ]},
+    { name: "💿 Throwbacks", artists: [
+      "The Killers","The White Stripes","OutKast","Britney Spears","Beyonce","50 Cent",
+      "Queen","Michael Jackson","Guns N Roses","Nirvana","Oasis","Toto",
+      "ABBA","Fleetwood Mac","Eminem","Coldplay","Red Hot Chili Peppers","Green Day",
+      "The Black Eyed Peas","Usher","Gwen Stefani","Linkin Park",
+    ]},
+    { name: "🎤 Pop Icons", artists: [
+      "Lady Gaga","Katy Perry","Rihanna","Beyonce","Adele","Lizzo",
+      "Doja Cat","Olivia Rodrigo","Sabrina Carpenter","Tate McRae","Miley Cyrus","P!nk",
+      "Ariana Grande","Dua Lipa","Charlie Puth","Shawn Mendes","Camila Cabello","Selena Gomez",
+      "Nicki Minaj","Justin Timberlake","Britney Spears","Christina Aguilera",
+    ]},
+  ];
+
+  // ---------- DOM ----------
+  const $ = (id) => document.getElementById(id);
+  const slider=$("slider"), playBtn=$("playBtn"), lockBtn=$("lockBtn"), nextBtn=$("nextBtn"),
+        trackRow=$("trackRow"), disc=$("disc"), songTitle=$("songTitle"), songArtist=$("songArtist"),
+        loadNote=$("loadNote"), resultEl=$("result"), verdictEl=$("verdict"), detailEl=$("detail"),
+        scoreEl=$("score"), streakEl=$("streak"), roundEl=$("round"),
+        timerEl=$("timer"), ringFg=$("ringFg"), timerNum=$("timerNum");
+
+  // ---------- State ----------
+  const player = new Audio();
+  player.loop = true; player.preload = "auto";
+  setPreservesPitch(player, true); // change tempo, keep pitch = a true "BPM" change
+
+  const ROUND_SECONDS = 20;        // time to find the tempo before it auto-locks
+  let poolIndex = 0;
+  let targetPos = 50;     // hidden slider position that = original tempo (1.0x)
+  let locked = false, ready = false, playing = false;
+  let score = 0, streak = 0, round = 1;
+  let lastArtist = "";
+  const recent = new Set(), recentQ = [];   // track ids played recently, to avoid repeats
+  let loadToken = 0;      // guards against out-of-order async loads
+  let timeLeft = ROUND_SECONDS, roundActive = false;
+  const RING_C = 2 * Math.PI * 32; // circumference of the countdown ring
+
+  // ---------- helpers ----------
+  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+  const randInt=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+  function setPreservesPitch(el, v){ el.preservesPitch=v; el.mozPreservesPitch=v; el.webkitPreservesPitch=v; }
+
+  // slider position -> playback rate.  Correct tempo (1.0x) sits at targetPos.
+  // Each slider point ≈ 1% tempo, so the answer is at a different spot every round.
+  function rateFromPos(pos){ return clamp(1 + (pos - targetPos)/100, 0.5, 1.8); }
+
+  function paintSlider(){
+    const pct = ((slider.value - slider.min)/(slider.max - slider.min))*100;
+    slider.style.setProperty("--p", pct + "%");
+  }
+
+  function applyRate(){
+    if(!ready) return;
+    player.playbackRate = rateFromPos(parseFloat(slider.value));
+  }
+
+  // ---------- Detent "haptic-ish" feedback on slider movement ----------
+  // NOTE: browsers can't drive the Mac trackpad Taptic Engine, so this fakes the
+  // feel with a short click + a thumb pop, plus navigator.vibrate() for phones.
+  let tickCtx = null, lastTickPos = null, tickTimer = null;
+  function tick(){
+    if (navigator.vibrate) { try { navigator.vibrate(8); } catch(e){} } // real buzz on mobile, no-op on Mac
+    try {
+      if(!tickCtx) tickCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if(tickCtx.state === "suspended") tickCtx.resume();
+      const t = tickCtx.currentTime;
+      const o = tickCtx.createOscillator(), g = tickCtx.createGain();
+      o.type = "square"; o.frequency.value = 1500;
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.05, t + 0.001);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.03);
+      o.connect(g).connect(tickCtx.destination);
+      o.start(t); o.stop(t + 0.04);
+    } catch(e){}
+    slider.classList.add("ticking");
+    clearTimeout(tickTimer); tickTimer = setTimeout(() => slider.classList.remove("ticking"), 60);
+  }
+  function maybeTick(){
+    const p = Math.round(parseFloat(slider.value));
+    if(p !== lastTickPos){ lastTickPos = p; tick(); }
+  }
+
+  // ---------- Countdown timer ----------
+  ringFg.style.strokeDasharray = RING_C;
+  function updateTimer(){
+    const frac = clamp(timeLeft / ROUND_SECONDS, 0, 1);
+    ringFg.style.strokeDashoffset = (RING_C * (1 - frac)).toFixed(1);
+    timerNum.textContent = Math.ceil(timeLeft);
+    timerEl.classList.toggle("warn", timeLeft <= 10 && timeLeft > 5);
+    timerEl.classList.toggle("danger", timeLeft <= 5);
+  }
+  function resetTimer(){
+    timeLeft = ROUND_SECONDS; roundActive = false;
+    timerEl.classList.remove("warn", "danger");
+    updateTimer();
+  }
+  function autoLock(){
+    if(locked) return;
+    loadNote.textContent = "⏰ Time's up — auto-locked!";
+    lockIn();
+  }
+  setInterval(() => {
+    if(playing && !locked && roundActive){
+      timeLeft = Math.max(0, timeLeft - 0.25);
+      updateTimer();
+      if(timeLeft <= 0) autoLock();
+    }
+  }, 250);
+
+  // ---------- JSONP search against the iTunes API (no key, no CORS issues) ----------
+  function itunesSearch(term, limit){
+    return new Promise((resolve, reject) => {
+      const cb = "itcb_" + Math.abs(hash(term + ":" + (loadToken)));
+      const url = "https://itunes.apple.com/search?media=music&entity=song&limit=" + (limit||10) + "&term="
+                  + encodeURIComponent(term) + "&callback=" + cb;
+      const s = document.createElement("script");
+      let done = false;
+      const cleanup = () => { delete window[cb]; s.remove(); };
+      const timer = setTimeout(() => { if(!done){ done=true; cleanup(); reject(new Error("timeout")); } }, 9000);
+      window[cb] = (data) => { if(done) return; done=true; clearTimeout(timer); cleanup(); resolve((data&&data.results)||[]); };
+      s.onerror = () => { if(!done){ done=true; clearTimeout(timer); cleanup(); reject(new Error("network")); } };
+      s.src = url;
+      document.head.appendChild(s);
+    });
+  }
+  function hash(str){ let h=0; for(let i=0;i<str.length;i++){ h=(h*31+str.charCodeAt(i))|0; } return h; }
+
+  // ---------- Load a song ----------
+  async function loadSong(){
+    const myToken = ++loadToken;
+
+    locked = false; ready = false; playing = false;
+    resetTimer();
+    resultEl.classList.remove("show", "perfect");
+    playBtn.disabled = true; lockBtn.disabled = true; slider.disabled = true;
+    playBtn.textContent = "▶ Play";
+    disc.innerHTML = '<div class="placeholder">⏳</div>';
+    songTitle.textContent = "Loading…"; songArtist.textContent = "";
+    loadNote.textContent = "Fetching a track…";
+    roundEl.textContent = round;
+
+    // pick artists in random order; pull their top tracks and grab a fresh one
+    const order = shuffle(PLAYLISTS[poolIndex].artists.filter(a => a !== lastArtist));
+    if(!order.length) order.push(...PLAYLISTS[poolIndex].artists);
+    for (const artist of order){
+      if (myToken !== loadToken) return; // superseded
+      try {
+        const results = await itunesSearch(artist, 25);
+        if (myToken !== loadToken) return;
+        let cands = results.filter(r => r.previewUrl && r.trackId && !recent.has(r.trackId));
+        if(!cands.length) cands = results.filter(r => r.previewUrl); // fall back if all seen
+        if(!cands.length) continue;
+        // pick from the most-relevant (best-known) chunk for recognizability
+        const top = cands.slice(0, Math.min(12, cands.length));
+        const hit = top[randInt(0, top.length-1)];
+        rememberTrack(hit.trackId);
+        lastArtist = artist;
+
+        // hidden target tempo (fractional, so accuracy reads like 97.68%) + a clearly-wrong start
+        targetPos = randInt(28, 71) + Math.random();
+        let off = randInt(20, 38) * (Math.random()<0.5 ? -1 : 1);
+        let start = clamp(targetPos + off, 2, 98);
+        if (Math.abs(start - targetPos) < 16) start = clamp(targetPos + (start<targetPos?-20:20), 2, 98);
+        slider.value = start; lastTickPos = Math.round(start); paintSlider();
+
+        songTitle.textContent = hit.trackName;
+        songArtist.textContent = hit.artistName;
+        const art = (hit.artworkUrl100 || "").replace("100x100", "300x300");
+        disc.innerHTML = art ? `<img src="${art}" alt="">` : '<div class="placeholder">🎵</div>';
+
+        await prime(hit.previewUrl, myToken);
+        if (myToken !== loadToken) return;
+        ready = true;
+        applyRate();
+        slider.disabled = false; playBtn.disabled = false; lockBtn.disabled = false;
+        loadNote.textContent = "Ready — find the right speed.";
+        startPlayback(); // auto-begin (works once audio has been unlocked by a tap)
+        return;
+      } catch(e){ /* try next artist */ }
+    }
+    if (myToken === loadToken){
+      songTitle.textContent = "Couldn't load a track";
+      songArtist.textContent = "";
+      loadNote.textContent = "Network blocked the preview. Tap “Next Song” to retry.";
+    }
+  }
+
+  function rememberTrack(id){
+    if(id == null) return;
+    recent.add(id); recentQ.push(id);
+    if(recentQ.length > 60) recent.delete(recentQ.shift()); // keep a rolling window
+  }
+  function shuffle(a){
+    for(let i=a.length-1;i>0;i--){ const j=randInt(0,i); [a[i],a[j]]=[a[j],a[i]]; }
+    return a;
+  }
+
+  function prime(url, myToken){
+    return new Promise((resolve, reject) => {
+      const onCan = () => { cleanup(); resolve(); };
+      const onErr = () => { cleanup(); reject(new Error("audio")); };
+      const cleanup = () => { player.removeEventListener("canplay", onCan); player.removeEventListener("error", onErr); };
+      player.addEventListener("canplay", onCan);
+      player.addEventListener("error", onErr);
+      player.src = url; setPreservesPitch(player, true); player.load();
+      setTimeout(() => { if(myToken===loadToken) { cleanup(); resolve(); } }, 6000); // resolve anyway; play will buffer
+    });
+  }
+
+  // ---------- Play / pause ----------
+  function startPlayback(){
+    if(!ready) return Promise.resolve(false);
+    applyRate();
+    return player.play().then(()=>{
+      playing=true; if(!locked) roundActive=true; playBtn.textContent="⏸ Pause";
+      if(!locked) loadNote.textContent="";
+      return true;
+    }).catch(()=>{ if(!locked) loadNote.textContent="Tap ▶ Play to start the song."; return false; });
+  }
+  function togglePlay(){
+    if(!ready) return;
+    if(playing){ player.pause(); playing=false; playBtn.textContent="▶ Play"; }
+    else startPlayback();
+  }
+
+  // ---------- Lock in / score ----------
+  function lockIn(){
+    if(!ready || locked) return;
+    locked = true;
+    slider.disabled = true; lockBtn.disabled = true;
+    const err = Math.abs(parseFloat(slider.value) - targetPos); // ≈ % tempo off
+
+    // ----- point system -----
+    // ≤1% : full points (+ celebration).  1–10% : scaled points.
+    // 10–30% : zero.  >30% : penalty (minus points).
+    let pts, perfect = false;
+    if (err <= 1)        { pts = 100; perfect = true; }
+    else if (err <= 10)  { pts = Math.round(100 - (err - 1) * 10); }      // 90 → 10 across 1–10%
+    else if (err <= 30)  { pts = 0; }
+    else                 { pts = -Math.min(60, Math.round((err - 30) * 2)); } // penalty grows past 30%
+
+    if (err <= 10){ streak++; pts += Math.min(streak,5) * (perfect ? 5 : 2); } else streak = 0;
+    score += pts; scoreEl.textContent = score; streakEl.textContent = streak;
+
+    // ----- result readout: an accuracy %, green if scored / red if not -----
+    const accuracy = Math.max(0, 100 - err);   // 100% = dead-on
+    const gotPoints = pts > 0;
+    const color = gotPoints ? "var(--good)" : "var(--bad)";
+    const sign = pts >= 0 ? "+" : "";
+    verdictEl.style.color = color;
+    detailEl.innerHTML = `<b style="color:${color}">${sign}${pts}</b> points`;
+    resultEl.classList.add("show");
+    resultEl.classList.toggle("perfect", perfect);
+    countTo(verdictEl, 100, accuracy);   // count down from 100% to the real accuracy
+    loadNote.textContent = perfect
+      ? "🎆 Bang on! Now playing at the original tempo."
+      : "🎧 Now playing at the original tempo — hear the difference.";
+
+    if (perfect) celebrate();
+
+    // make sure it's playing, then glide to the true tempo so they hear it snap into place
+    if(!playing) startPlayback();
+    animateTo(targetPos);
+  }
+
+  function animateTo(dest){
+    const start = parseFloat(slider.value); const t0 = performance.now(); const dur=600;
+    function step(t){
+      const k = Math.min(1,(t-t0)/dur); const e = 1-Math.pow(1-k,3);
+      slider.value = (start + (dest-start)*e).toFixed(2);
+      paintSlider(); applyRate();
+      if(k<1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+    // guarantee we land exactly on the original tempo even if rAF is throttled (background tab)
+    setTimeout(()=>{ slider.value = dest; paintSlider(); applyRate(); }, dur + 120);
+  }
+
+  // animate a number ticking from `from`% to `to`% with 2 decimals
+  function countTo(el, from, to){
+    const t0 = performance.now(), dur = 900;
+    function step(t){
+      const k = Math.min(1,(t-t0)/dur); const e = 1-Math.pow(1-k,3);
+      el.textContent = (from + (to-from)*e).toFixed(2) + "%";
+      if(k<1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+    setTimeout(()=>{ el.textContent = to.toFixed(2) + "%"; }, dur + 120); // guaranteed final value
+  }
+
+  // ---------- Spinning vinyl driven by current playback rate ----------
+  let angle = 0, lastT = performance.now();
+  function spin(t){
+    const dt = (t-lastT)/1000; lastT=t;
+    if(playing){ angle = (angle + (player.playbackRate||1)*180*dt) % 360; disc.style.transform = `rotate(${angle}deg)`; }
+    requestAnimationFrame(spin);
+  }
+  requestAnimationFrame(spin);
+
+  // ---------- Fireworks celebration (only on a ≤1% perfect) ----------
+  const fx = $("fx"), fxCtx = fx.getContext("2d");
+  let fxParticles = [], fxRunning = false, fxLaunching = false;
+  function fxResize(){ fx.width = window.innerWidth; fx.height = window.innerHeight; }
+  window.addEventListener("resize", fxResize); fxResize();
+  function fxBurst(x, y){
+    const n = 70, hue = randInt(0, 359);
+    for(let i=0;i<n;i++){
+      const a = (Math.PI*2)*(i/n) + Math.random()*0.1, sp = 2 + Math.random()*5;
+      fxParticles.push({ x, y, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp, life:1, hue:hue + randInt(-25,25) });
+    }
+  }
+  function celebrate(){
+    fx.style.display = "block"; fxResize();
+    // a short happy chime
+    try {
+      if(!tickCtx) tickCtx = new (window.AudioContext||window.webkitAudioContext)();
+      if(tickCtx.state==="suspended") tickCtx.resume();
+      [0,4,7,12].forEach((semi,i)=>{
+        const t = tickCtx.currentTime + i*0.09;
+        const o = tickCtx.createOscillator(), g = tickCtx.createGain();
+        o.type="triangle"; o.frequency.value = 523.25 * Math.pow(2, semi/12);
+        g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.18,t+0.01);
+        g.gain.exponentialRampToValueAtTime(0.0001,t+0.3);
+        o.connect(g).connect(tickCtx.destination); o.start(t); o.stop(t+0.35);
+      });
+    } catch(e){}
+    // seed a burst RIGHT NOW so the loop has something to draw on frame 1
+    fxBurst(fx.width*0.5, fx.height*0.35);
+    fxLaunching = true;
+    let launches = 1;
+    const launchTimer = setInterval(() => {
+      fxBurst(fx.width*(0.18+Math.random()*0.64), fx.height*(0.18+Math.random()*0.4));
+      if(++launches >= 7){ clearInterval(launchTimer); fxLaunching = false; }
+    }, 240);
+    if(!fxRunning){ fxRunning = true; requestAnimationFrame(fxStep); }
+  }
+  function fxStep(){
+    fxCtx.clearRect(0,0,fx.width,fx.height);
+    for(const p of fxParticles){
+      p.x += p.vx; p.y += p.vy; p.vy += 0.06; p.vx *= 0.99; p.life -= 0.012;
+      fxCtx.globalAlpha = Math.max(0, p.life);
+      fxCtx.fillStyle = `hsl(${p.hue},100%,62%)`;
+      fxCtx.beginPath(); fxCtx.arc(p.x, p.y, 3, 0, Math.PI*2); fxCtx.fill();
+    }
+    fxCtx.globalAlpha = 1;
+    fxParticles = fxParticles.filter(p => p.life > 0);
+    // keep running while particles remain OR more bursts are still queued
+    if(fxParticles.length || fxLaunching){ requestAnimationFrame(fxStep); }
+    else { fxRunning = false; fx.style.display = "none"; }
+  }
+
+  // ---------- Playlist chips ----------
+  function buildChips(){
+    PLAYLISTS.forEach((p,i) => {
+      const c = document.createElement("div");
+      c.className = "chip" + (i===0?" active":"");
+      c.textContent = p.name;
+      c.onclick = () => {
+        poolIndex = i;
+        [...trackRow.children].forEach((ch,j)=>ch.classList.toggle("active", j===i));
+        round = 1; score = 0; streak = 0; scoreEl.textContent=0; streakEl.textContent=0;
+        loadSong();
+      };
+      trackRow.appendChild(c);
+    });
+  }
+
+  // ---------- events ----------
+  playBtn.onclick = togglePlay;
+  lockBtn.onclick = lockIn;
+  nextBtn.onclick = () => { round++; loadSong(); };
+  slider.oninput = () => { if(locked) return; paintSlider(); applyRate(); maybeTick(); };
+  document.addEventListener("keydown", (e) => {
+    if(slider.disabled) return;
+    if(e.key==="ArrowLeft"){ slider.value=clamp(+slider.value-0.5,0,100); paintSlider(); applyRate(); maybeTick(); e.preventDefault(); }
+    if(e.key==="ArrowRight"){ slider.value=clamp(+slider.value+0.5,0,100); paintSlider(); applyRate(); maybeTick(); e.preventDefault(); }
+  });
+
+  // ---------- init ----------
+  buildChips(); paintSlider(); loadSong();
+})();
+</script>
+</body>
+</html>

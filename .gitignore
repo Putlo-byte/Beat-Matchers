@@ -1,0 +1,5 @@
+# Local desktop-launcher / icon build artifacts (not needed for the website)
+BPMicon.iconset/
+BPMicon.icns
+icon_master.png
+.DS_Store
