@@ -31,11 +31,8 @@ git push                 # GitHub Pages auto-rebuilds in ~1 min
 **Bash note:** `git`/`gh`/network commands often need `dangerouslyDisableSandbox: true`.
 
 ## ⚠️ OPEN ITEMS / TODO
-1. **HTTPS cert pending.** Site serves over HTTP only; GitHub hasn't issued the Let's Encrypt cert yet (`cert state: None`). DNS + CAA are correct, nothing blocks it.
-   - Check: `gh api repos/Putlo-byte/bpm-matc/pages` → look at `https_certificate.state`.
-   - Fix if stuck: GitHub → Settings → Pages → delete custom domain → Save → wait 1 min → re-enter `beatmatchers.net` → Save. (Forces re-validation.)
-   - Once cert exists, enable Enforce HTTPS: `gh api --method PUT repos/Putlo-byte/bpm-matc/pages -F https_enforced=true`
-2. **Firebase Auth authorized domain.** For Google sign-in to work **on beatmatchers.net**, that domain must be added in Firebase → Authentication → Settings → **Authorized domains**. (`putlo-byte.github.io` and `localhost` are already authorized; `beatmatchers.net` likely still needs adding — verify.)
+1. ~~HTTPS cert~~ **DONE.** Cert approved, `https://beatmatchers.net` serves 200, Enforce HTTPS is ON (http 301→https).
+2. **Firebase Auth authorized domain.** For Google sign-in to work **on beatmatchers.net**, that domain must be in Firebase → Authentication → Settings → **Authorized domains**. (`localhost` + `putlo-byte.github.io` were already there; user was adding `beatmatchers.net` — verify it's listed if sign-in still fails with `auth/unauthorized-domain`.)
 3. `beatmatchers.net.zone` (in the parent `codeProjects/` folder) was the Cloudflare DNS import file — can be deleted now.
 
 ## External services & config
