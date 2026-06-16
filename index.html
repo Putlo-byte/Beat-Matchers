@@ -14,6 +14,7 @@
     --shadow: 0 20px 60px rgba(0,0,0,0.45);
   }
   * { box-sizing: border-box; }
+  [hidden] { display: none !important; }   /* ensure the hidden attribute always wins over display:flex etc. */
   html, body { height: 100%; }
   body {
     margin: 0; color: var(--text);
@@ -122,6 +123,59 @@
   #fx { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 60; display: none; }
   .result.perfect { border-color: var(--good); box-shadow: 0 0 40px rgba(74,222,128,0.35); animation: pop .3s ease, celebrate 1.2s ease infinite; }
   @keyframes celebrate { 0%,100% { box-shadow: 0 0 30px rgba(74,222,128,0.25);} 50% { box-shadow: 0 0 55px rgba(110,231,255,0.5);} }
+
+  /* ===== Start menu ===== */
+  #menuView { padding: 22px 4px 6px; text-align: center; }
+  .menuTitle { font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 18px; }
+  .menuBtns { display: flex; gap: 16px; flex-wrap: wrap; }
+  .modeBtn { flex: 1; min-width: 220px; display: flex; flex-direction: column; align-items: center; gap: 7px;
+    padding: 28px 18px; border-radius: 18px; cursor: pointer; color: var(--text);
+    border: 1px solid var(--stroke); background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02)); transition: .15s; }
+  .modeBtn:hover { transform: translateY(-2px); border-color: var(--accent); box-shadow: 0 12px 30px rgba(0,0,0,0.4); }
+  .modeBtn .mIcon { font-size: 40px; }
+  .modeBtn .mName { font-size: 18px; font-weight: 800; }
+  .modeBtn .mDesc { font-size: 12px; color: var(--muted); max-width: 220px; }
+  .setupNote { margin-top: 18px; text-align: left; font-size: 12.5px; line-height: 1.7; color: var(--muted);
+    background: rgba(0,0,0,0.28); border: 1px solid var(--stroke); border-radius: 12px; padding: 14px 16px; }
+  .setupNote b { color: var(--text); } .setupNote code { background: rgba(255,255,255,0.08); padding: 1px 5px; border-radius: 5px; font-size: 11.5px; }
+  .setupNote a { color: var(--accent); } .setupNote ol { margin: 8px 0 0; padding-left: 18px; } .setupNote li { margin: 4px 0; }
+
+  /* ===== Matchmaking queue ===== */
+  #queueView { text-align: center; padding: 38px 10px; }
+  .qSpinner { width: 54px; height: 54px; margin: 0 auto 22px; border-radius: 50%;
+    border: 5px solid rgba(255,255,255,0.1); border-top-color: var(--accent); animation: spin1 1s linear infinite; }
+  @keyframes spin1 { to { transform: rotate(360deg); } }
+  .qTitle { font-size: 20px; font-weight: 800; margin-bottom: 6px; }
+  .qSub { font-size: 13px; color: var(--muted); margin-bottom: 22px; }
+
+  /* ===== MP scoreboard ===== */
+  #mpScore { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 2px 0 16px;
+    background: rgba(0,0,0,0.25); border: 1px solid var(--stroke); border-radius: 14px; padding: 12px 18px; }
+  .mpTeam { text-align: center; min-width: 78px; } .mpTeam b { display: block; font-size: 26px; font-weight: 800; line-height: 1.1; }
+  .mpTeam span { font-size: 10.5px; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); }
+  .mpTeam.you b { color: var(--accent); } .mpTeam.opp b { color: var(--accent2); }
+  .mpRoundLabel { font-size: 13px; font-weight: 700; color: var(--muted); }
+
+  /* ===== MP reveal ===== */
+  #mpReveal { margin-top: 18px; }
+  .revealTrack { position: relative; height: 16px; border-radius: 999px; margin: 34px 6px 8px;
+    background: linear-gradient(90deg, #1b2440, #2a3556); border: 1px solid var(--stroke); }
+  .revMark { position: absolute; top: 50%; transform: translate(-50%,-50%); }
+  .revMark.dot { width: 20px; height: 20px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 2px 8px rgba(0,0,0,.5); }
+  .revMark.you { background: var(--accent); } .revMark.opp { background: var(--accent2); }
+  .revMark.target { font-size: 22px; }
+  .revMark .tag { position: absolute; bottom: 22px; left: 50%; transform: translateX(-50%); font-size: 10px; white-space: nowrap; font-weight: 700; }
+  .revLabels { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); padding: 0 6px; }
+  .revStats { display: flex; justify-content: space-around; margin-top: 18px; gap: 10px; }
+  .revCol { text-align: center; } .revCol .who { font-size: 11px; text-transform: uppercase; letter-spacing: .6px; }
+  .revCol .acc { font-size: 24px; font-weight: 800; } .revCol .pts { font-size: 12px; color: var(--muted); }
+  .revWinner { text-align: center; font-size: 18px; font-weight: 800; margin-top: 14px; }
+
+  /* ===== MP final ===== */
+  #mpFinal { text-align: center; padding: 14px 0 4px; }
+  .finalWinner { font-size: 32px; font-weight: 800; margin-bottom: 8px; letter-spacing: -.5px; }
+  .finalScores { font-size: 16px; color: var(--muted); margin-bottom: 20px; }
+  .finalScores b { font-size: 20px; }
 </style>
 </head>
 <body>
@@ -141,6 +195,39 @@
       <div class="stat"><b id="round">1</b><span>Song</span></div>
     </div>
   </header>
+
+  <!-- ===== Start menu ===== -->
+  <div id="menuView">
+    <div class="menuTitle">Choose a mode</div>
+    <div class="menuBtns">
+      <button class="modeBtn" id="spBtn">
+        <span class="mIcon">🎮</span><span class="mName">Singleplayer</span>
+        <span class="mDesc">Match songs solo and chase your high score.</span>
+      </button>
+      <button class="modeBtn" id="mpBtn">
+        <span class="mIcon">🌐</span><span class="mName">Multiplayer 1v1</span>
+        <span class="mDesc">Queue up and duel a random opponent over 5 songs.</span>
+      </button>
+    </div>
+    <div id="mpSetupNote" class="setupNote" hidden></div>
+  </div>
+
+  <!-- ===== Matchmaking queue ===== -->
+  <div id="queueView" hidden>
+    <div class="qSpinner"></div>
+    <div class="qTitle" id="qTitle">Searching for an opponent…</div>
+    <div class="qSub" id="qSub">Hang tight — pairing you with another player who's queued up.</div>
+    <button class="btn ghost" id="qCancel" style="flex:none;padding:10px 22px;">Cancel</button>
+  </div>
+
+  <!-- ===== Play area (shared by Singleplayer + Multiplayer) ===== -->
+  <div id="play" hidden>
+
+  <div id="mpScore" hidden>
+    <div class="mpTeam you"><b id="mpYouScore">0</b><span>You</span></div>
+    <div class="mpRoundLabel" id="mpRoundLabel">Round 1 / 5</div>
+    <div class="mpTeam opp"><b id="mpOppScore">0</b><span>Opponent</span></div>
+  </div>
 
   <div class="track-row" id="trackRow"></div>
 
@@ -166,10 +253,14 @@
     <input type="range" id="slider" min="0" max="100" step="0.5" value="50" disabled />
   </div>
 
-  <div class="controls">
+  <div class="controls" id="spControls">
     <button class="btn play" id="playBtn" disabled>▶ Play</button>
     <button class="btn lock" id="lockBtn" disabled>🔒 Lock In</button>
     <button class="btn next" id="nextBtn">Next Song →</button>
+  </div>
+
+  <div class="controls" id="mpControls" hidden>
+    <button class="btn lock" id="mpLockBtn" disabled>🔒 Lock In Guess</button>
   </div>
 
   <div class="result" id="result">
@@ -177,16 +268,54 @@
     <div class="detail" id="detail"></div>
   </div>
 
-  <div class="hint">
+  <!-- ===== Multiplayer round reveal ===== -->
+  <div id="mpReveal" hidden>
+    <div class="revealTrack">
+      <div class="revMark target" id="revTarget" title="Original tempo">🎯<span class="tag" style="color:var(--text)">Original</span></div>
+      <div class="revMark dot you" id="revYou"><span class="tag" style="color:var(--accent)">You</span></div>
+      <div class="revMark dot opp" id="revOpp"><span class="tag" style="color:var(--accent2)">Opp</span></div>
+    </div>
+    <div class="revLabels"><span>🐢 Slower</span><span>Faster 🐇</span></div>
+    <div class="revStats" id="revStats"></div>
+    <div class="revWinner" id="revWinner"></div>
+  </div>
+
+  <!-- ===== Multiplayer final result ===== -->
+  <div id="mpFinal" hidden>
+    <div class="finalWinner" id="finalWinner"></div>
+    <div class="finalScores" id="finalScores"></div>
+    <div class="controls">
+      <button class="btn next" id="rematchBtn">🔁 Find New Match</button>
+      <button class="btn ghost" id="menuBtn2">Main Menu</button>
+    </div>
+  </div>
+
+  <div class="hint" id="hintSP">
     The song is playing at the <b>wrong tempo</b>. There's no meter and no hint — trust your memory of how the
     track actually goes, slide until it feels right, then <kbd>Lock In</kbd>. <kbd>←</kbd> <kbd>→</kbd> fine-tune.
   </div>
   <div class="credit">30-second song previews provided by the Apple / iTunes Search API.</div>
-</div>
 
+  </div><!-- /#play -->
+
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 <script>
 (() => {
   "use strict";
+
+  // ============================================================
+  //  Firebase config — PASTE YOUR PROJECT CONFIG HERE to enable
+  //  online multiplayer. Singleplayer works without it.
+  //  (Realtime Database project; see README / setup steps.)
+  // ============================================================
+  const FIREBASE_CONFIG = {
+    apiKey: "",
+    authDomain: "",
+    databaseURL: "",
+    projectId: "",
+    appId: ""
+  };
 
   // ---------- Playlists = pools of popular artists ----------
   // Each round picks a random artist, pulls their top tracks live from the iTunes
@@ -226,6 +355,18 @@
         loadNote=$("loadNote"), resultEl=$("result"), verdictEl=$("verdict"), detailEl=$("detail"),
         scoreEl=$("score"), streakEl=$("streak"), roundEl=$("round"),
         timerEl=$("timer"), ringFg=$("ringFg"), timerNum=$("timerNum");
+  // menu / multiplayer DOM
+  const menuView=$("menuView"), queueView=$("queueView"), playView=$("play"),
+        spBtn=$("spBtn"), mpBtn=$("mpBtn"), mpSetupNote=$("mpSetupNote"),
+        qTitle=$("qTitle"), qSub=$("qSub"), qCancel=$("qCancel"),
+        spControls=$("spControls"), hintSP=$("hintSP"),
+        mpScore=$("mpScore"), mpYouScore=$("mpYouScore"), mpOppScore=$("mpOppScore"), mpRoundLabel=$("mpRoundLabel"),
+        mpControls=$("mpControls"), mpLockBtn=$("mpLockBtn"),
+        mpReveal=$("mpReveal"), revYou=$("revYou"), revOpp=$("revOpp"), revTarget=$("revTarget"),
+        revStats=$("revStats"), revWinner=$("revWinner"),
+        mpFinal=$("mpFinal"), finalWinner=$("finalWinner"), finalScores=$("finalScores"),
+        rematchBtn=$("rematchBtn"), menuBtn2=$("menuBtn2");
+  const show = (el, on) => { el.hidden = !on; };
 
   // ---------- State ----------
   const player = new Audio();
@@ -233,6 +374,7 @@
   setPreservesPitch(player, true); // change tempo, keep pitch = a true "BPM" change
 
   const ROUND_SECONDS = 20;        // time to find the tempo before it auto-locks
+  let mode = null;                 // null | 'single' | 'multi'
   let poolIndex = 0;
   let targetPos = 50;     // hidden slider position that = original tempo (1.0x)
   let locked = false, ready = false, playing = false;
@@ -307,8 +449,29 @@
     loadNote.textContent = "⏰ Time's up — auto-locked!";
     lockIn();
   }
+
+  // ---------- Multiplayer countdown (shares the same ring UI) ----------
+  let mpTimeLeft = ROUND_SECONDS, mpTicking = false, mpTimerId = null;
+  function updateMpTimer(){
+    const frac = clamp(mpTimeLeft / ROUND_SECONDS, 0, 1);
+    ringFg.style.strokeDashoffset = (RING_C * (1 - frac)).toFixed(1);
+    timerNum.textContent = Math.ceil(mpTimeLeft);
+    timerEl.classList.toggle("warn", mpTimeLeft <= 10 && mpTimeLeft > 5);
+    timerEl.classList.toggle("danger", mpTimeLeft <= 5);
+  }
+  function startMpTimer(){
+    mpTimeLeft = ROUND_SECONDS; mpTicking = true; updateMpTimer();
+    clearInterval(mpTimerId);
+    mpTimerId = setInterval(() => {
+      if(!mpTicking) return;
+      mpTimeLeft = Math.max(0, mpTimeLeft - 0.25);
+      updateMpTimer();
+      if(mpTimeLeft <= 0){ mpTicking = false; if(!myLocked) mpLockIn(); }
+    }, 250);
+  }
+  function stopMpTimer(){ mpTicking = false; clearInterval(mpTimerId); }
   setInterval(() => {
-    if(playing && !locked && roundActive){
+    if(mode === 'single' && playing && !locked && roundActive){
       timeLeft = Math.max(0, timeLeft - 0.25);
       updateTimer();
       if(timeLeft <= 0) autoLock();
@@ -584,8 +747,309 @@
     if(e.key==="ArrowRight"){ slider.value=clamp(+slider.value+0.5,0,100); paintSlider(); applyRate(); maybeTick(); e.preventDefault(); }
   });
 
+  // ============================================================
+  //  MODE SWITCHING + MENU
+  // ============================================================
+  function stopAllAudio(){ try{ player.pause(); }catch(e){} playing = false; stopMpTimer(); }
+
+  const headerStats = document.querySelector('.stats');
+  function showMenu(){
+    mode = null; cleanupMatch(); stopAllAudio();
+    show(menuView, true); show(queueView, false); show(playView, false);
+    show(headerStats, false);
+    mpSetupNote.hidden = true;
+  }
+
+  function startSingle(){
+    mode = 'single';
+    show(menuView, false); show(queueView, false); show(playView, true);
+    // singleplayer layout
+    show(headerStats, true);
+    show(mpScore, false); show(trackRow, true); show(spControls, true); show(hintSP, true);
+    show(mpControls, false); show(mpReveal, false); show(mpFinal, false);
+    resultEl.classList.remove("show", "perfect");
+    score = 0; streak = 0; round = 1; scoreEl.textContent = 0; streakEl.textContent = 0;
+    roundEl.textContent = 1;
+    loadSong();
+  }
+
+  spBtn.onclick = startSingle;
+  mpBtn.onclick = startMulti;
+
+  // ============================================================
+  //  MULTIPLAYER (Firebase Realtime Database)
+  // ============================================================
+  const ALL_ARTISTS = PLAYLISTS.flatMap(p => p.artists);
+  const me = Math.random().toString(36).slice(2,10) + Date.now().toString(36);
+  let db = null, fbInited = false;
+  let M = null;            // current match context
+  let myLocked = false;
+
+  function firebaseReady(){
+    return !!(window.firebase && FIREBASE_CONFIG && FIREBASE_CONFIG.apiKey && FIREBASE_CONFIG.databaseURL);
+  }
+  function ensureFirebase(){
+    if(fbInited) return true;
+    if(!firebaseReady()) return false;
+    try { firebase.initializeApp(FIREBASE_CONFIG); db = firebase.database(); fbInited = true; }
+    catch(e){ return false; }
+    return true;
+  }
+
+  function startMulti(){
+    if(!ensureFirebase()){ showSetupNote(); return; }
+    mode = 'multi'; myLocked = false;
+    show(menuView, false); show(queueView, true); show(playView, false);
+    qTitle.textContent = "Searching for an opponent…";
+    qSub.textContent = "Hang tight — pairing you with another player who's queued up.";
+    enterQueue();
+  }
+
+  function showSetupNote(){
+    mpSetupNote.hidden = false;
+    mpSetupNote.innerHTML =
+      "<b>Online multiplayer needs a one-time free setup.</b> Create a Firebase project, " +
+      "enable <b>Realtime Database</b>, and paste its config into <code>index.html</code> " +
+      "(the <code>FIREBASE_CONFIG</code> block near the top of the script). Then push again." +
+      "<ol><li>Go to <a href='https://console.firebase.google.com' target='_blank'>console.firebase.google.com</a> → Add project</li>" +
+      "<li>Build → <b>Realtime Database</b> → Create (start in test mode)</li>" +
+      "<li>Project settings → Your apps → Web → copy the config object</li>" +
+      "<li>Paste it into <code>FIREBASE_CONFIG</code> and re-deploy</li></ol>" +
+      "Singleplayer works right now without any of this.";
+  }
+
+  // ---- matchmaking: one waiting slot in /queue ----
+  function enterQueue(){
+    let role = null, opp = null;
+    const qref = db.ref('queue');
+    qref.transaction(cur => {
+      if(cur && cur.id && cur.id !== me){ role = 'host'; opp = cur.id; return null; }     // claim the waiter
+      role = 'wait'; return { id: me, ts: Date.now() };                                    // wait for someone
+    }, (err, committed) => {
+      if(mode !== 'multi') return;
+      if(err || !committed){ setTimeout(() => { if(mode === 'multi') enterQueue(); }, 700); return; }
+      if(role === 'host'){ hostCreateMatch(opp); }
+      else { qref.onDisconnect().remove(); waitForMatch(qref); }
+    });
+  }
+  function waitForMatch(qref){
+    const pm = db.ref('playerMatch/' + me);
+    pm.on('value', s => {
+      const mid = s.val();
+      if(mid && mode === 'multi'){
+        pm.off(); qref.onDisconnect().cancel();
+        db.ref('queue').transaction(c => (c && c.id === me) ? null : c);
+        db.ref('playerMatch/' + me).remove();
+        runMatch(mid, 'guest');
+      }
+    });
+  }
+  async function hostCreateMatch(opp){
+    qTitle.textContent = "Opponent found!"; qSub.textContent = "Loading 5 songs…";
+    const matchId = 'm' + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+    const mref = db.ref('matches/' + matchId);
+    await mref.set({ host: me, players: { [me]: true, [opp]: true }, state: 'loading', currentRound: 0, createdAt: Date.now() });
+    db.ref('playerMatch/' + opp).set(matchId);
+    const songs = [];
+    let guard = 0;
+    while(songs.length < 5 && guard < 60){
+      guard++;
+      if(mode !== 'multi') return;
+      const s = await resolveRandomTrack();
+      if(s) songs.push(s);
+    }
+    if(songs.length < 5){ qSub.textContent = "Couldn't load songs — try again."; return; }
+    await mref.child('songs').set(songs);
+    await mref.update({ state: 'playing', startedAt: Date.now() });
+    runMatch(matchId, 'host');
+  }
+
+  // resolve one random popular track into a playable round payload
+  async function resolveRandomTrack(){
+    for(let attempt = 0; attempt < 4; attempt++){
+      const artist = ALL_ARTISTS[randInt(0, ALL_ARTISTS.length - 1)];
+      try {
+        const results = await itunesSearch(artist, 25);
+        const fresh = results.filter(r => r.previewUrl && r.trackId && !recent.has(r.trackId));
+        const pool = fresh.length ? fresh : results.filter(r => r.previewUrl);
+        if(!pool.length) continue;
+        const top = pool.slice(0, Math.min(12, pool.length));
+        const hit = top[randInt(0, top.length - 1)];
+        rememberTrack(hit.trackId);
+        const target = randInt(28, 71) + Math.random();
+        let off = randInt(20, 38) * (Math.random() < 0.5 ? -1 : 1);
+        let start = clamp(target + off, 2, 98);
+        if(Math.abs(start - target) < 16) start = clamp(target + (start < target ? -20 : 20), 2, 98);
+        return { trackName: hit.trackName, artistName: hit.artistName,
+                 art: (hit.artworkUrl100 || "").replace("100x100","300x300"),
+                 previewUrl: hit.previewUrl, targetPos: target, startPos: start };
+      } catch(e){}
+    }
+    return null;
+  }
+
+  function opponentId(m){ return Object.keys(m.players || {}).find(k => k !== me); }
+
+  function runMatch(matchId, role){
+    cleanupMatch();
+    M = { id: matchId, role, ref: db.ref('matches/' + matchId), curRound: -1, songs: null,
+          state: null, revealed: new Set(), finished: false, oppLeftHandled: false };
+    M.ref.child('present/' + me).onDisconnect().remove();
+    M.ref.child('present/' + me).set(true);
+    if(role === 'host'){ M.ref.onDisconnect().remove(); } // host cleans the match node if it drops
+    M.ref.on('value', s => onMatchState(s.val()));
+  }
+  function cleanupMatch(){
+    if(M){ try{ M.ref.off(); M.ref.child('present/' + me).remove(); }catch(e){} M = null; }
+    myLocked = false;
+  }
+
+  function onMatchState(m){
+    if(!M) return;
+    if(!m){ if(mode === 'multi') showMenu(); return; }
+    M.state = m; if(m.songs) M.songs = m.songs;
+
+    // opponent left mid-match?
+    if(m.state === 'playing' && m.present && !M.oppLeftHandled){
+      const opp = opponentId(m);
+      if(opp && !m.present[opp] && M.songs){ M.oppLeftHandled = true; oppLeft(); return; }
+    }
+
+    if(m.state === 'playing' && M.songs){
+      show(queueView, false); show(playView, true);
+      show(mpScore, true); show(trackRow, false); show(spControls, false); show(hintSP, false);
+      resultEl.classList.remove("show", "perfect");
+      const r = m.currentRound || 0;
+      const guesses = (m.rounds && m.rounds[r] && m.rounds[r].guesses) || {};
+      const opp = opponentId(m);
+      const bothIn = guesses[me] && guesses[opp];
+
+      if(r !== M.curRound){ startRound(r, m); }
+
+      if(bothIn && !M.revealed.has(r)){
+        M.revealed.add(r);
+        stopMpTimer();
+        revealRound(r, guesses[me], guesses[opp], m.songs[r].targetPos);
+        if(M.role === 'host'){
+          setTimeout(() => {
+            if(!M) return;
+            if(r + 1 < 5) M.ref.update({ currentRound: r + 1 });
+            else M.ref.update({ state: 'finished' });
+          }, 5000);
+        }
+      } else if(guesses[me] && !bothIn){
+        loadNote.textContent = "Locked in — waiting for opponent…";
+      }
+    } else if(m.state === 'finished'){
+      showFinal(m);
+    }
+  }
+
+  function startRound(r, m){
+    M.curRound = r;
+    show(mpReveal, false); show(mpFinal, false); show(mpControls, true);
+    mpRoundLabel.textContent = `Round ${r + 1} / 5`;
+    updateMpTotals(r - 1);
+    const song = m.songs[r];
+    targetPos = song.targetPos; ready = true; locked = false; myLocked = false;
+    slider.disabled = false; mpLockBtn.disabled = false;
+    slider.value = song.startPos; lastTickPos = Math.round(song.startPos); paintSlider();
+    songTitle.textContent = song.trackName; songArtist.textContent = song.artistName;
+    disc.innerHTML = song.art ? `<img src="${song.art}" alt="">` : '<div class="placeholder">🎵</div>';
+    loadNote.textContent = "Match the tempo by ear, then Lock In.";
+    mpLoadPlay(song.previewUrl);
+    startMpTimer();
+  }
+
+  function mpLoadPlay(url){
+    player.src = url; setPreservesPitch(player, true); player.loop = true;
+    applyRate();
+    player.play().then(() => { playing = true; }).catch(() => { loadNote.textContent = "Tap the slider, then it'll play."; });
+  }
+
+  function mpLockIn(){
+    if(myLocked || !M || M.curRound < 0) return;
+    myLocked = true; locked = true; slider.disabled = true; mpLockBtn.disabled = true;
+    stopMpTimer();
+    const r = M.curRound, pos = parseFloat(slider.value);
+    const err = Math.abs(pos - M.songs[r].targetPos);
+    const acc = Math.max(0, 100 - err), pts = scoreFor(err);
+    M.ref.child('rounds/' + r + '/guesses/' + me).set({ pos, acc, pts });
+    loadNote.textContent = `Locked in ${acc.toFixed(2)}% — waiting for opponent…`;
+  }
+  mpLockBtn.onclick = mpLockIn;
+
+  function scoreFor(err){
+    if(err <= 1) return 100;
+    if(err <= 10) return Math.round(100 - (err - 1) * 10);
+    if(err <= 30) return 0;
+    return -Math.min(60, Math.round((err - 30) * 2));
+  }
+
+  function revealRound(r, mine, theirs, target){
+    show(mpControls, false); show(mpReveal, true);
+    revYou.style.left = clamp(mine.pos, 0, 100) + "%";
+    revOpp.style.left = clamp(theirs.pos, 0, 100) + "%";
+    revTarget.style.left = clamp(target, 0, 100) + "%";
+    const fmt = p => (p >= 0 ? "+" : "") + p + " pts";
+    revStats.innerHTML =
+      `<div class="revCol"><div class="who" style="color:var(--accent)">You</div>` +
+      `<div class="acc" style="color:var(--accent)">${mine.acc.toFixed(2)}%</div><div class="pts">${fmt(mine.pts)}</div></div>` +
+      `<div class="revCol"><div class="who" style="color:var(--accent2)">Opponent</div>` +
+      `<div class="acc" style="color:var(--accent2)">${theirs.acc.toFixed(2)}%</div><div class="pts">${fmt(theirs.pts)}</div></div>`;
+    const w = mine.acc > theirs.acc ? 'you' : (theirs.acc > mine.acc ? 'opp' : 'tie');
+    revWinner.textContent = w === 'you' ? "🏆 You win this round!" : w === 'opp' ? "Opponent takes this round" : "Round tied";
+    revWinner.style.color = w === 'you' ? "var(--good)" : w === 'opp' ? "var(--bad)" : "var(--muted)";
+    updateMpTotals(r);
+    // play the song back at its true tempo during the reveal
+    if(!playing) mpLoadPlay(M.songs[r].previewUrl);
+    animateTo(target);
+  }
+
+  function totals(m, upto){
+    let y = 0, o = 0; const opp = opponentId(m);
+    for(let i = 0; i <= upto; i++){
+      const g = m.rounds && m.rounds[i] && m.rounds[i].guesses;
+      if(g){ if(g[me]) y += g[me].pts; if(opp && g[opp]) o += g[opp].pts; }
+    }
+    return { y, o };
+  }
+  function updateMpTotals(upto){
+    if(!M || !M.state) return;
+    const t = totals(M.state, upto);
+    mpYouScore.textContent = t.y; mpOppScore.textContent = t.o;
+  }
+
+  function showFinal(m){
+    stopMpTimer(); try{ player.pause(); }catch(e){} playing = false;
+    show(mpControls, false); show(mpReveal, false); show(mpFinal, true); show(mpScore, true);
+    const t = totals(m, 4);
+    mpYouScore.textContent = t.y; mpOppScore.textContent = t.o;
+    let txt, color;
+    if(t.y > t.o){ txt = "🏆 You Win!"; color = "var(--good)"; }
+    else if(t.o > t.y){ txt = "You Lose 😬"; color = "var(--bad)"; }
+    else { txt = "It's a Tie!"; color = "var(--warn)"; }
+    finalWinner.textContent = txt; finalWinner.style.color = color;
+    finalScores.innerHTML = `You <b style="color:var(--accent)">${t.y}</b> &nbsp;—&nbsp; <b style="color:var(--accent2)">${t.o}</b> Opponent`;
+    M.finished = true;
+  }
+
+  function oppLeft(){
+    stopMpTimer(); try{ player.pause(); }catch(e){} playing = false;
+    show(mpControls, false); show(mpReveal, false); show(mpFinal, true);
+    finalWinner.textContent = "🏆 You Win!"; finalWinner.style.color = "var(--good)";
+    finalScores.textContent = "Your opponent left the match.";
+  }
+
+  qCancel.onclick = () => {
+    if(db){ db.ref('queue').transaction(c => (c && c.id === me) ? null : c); db.ref('playerMatch/' + me).remove(); }
+    showMenu();
+  };
+  rematchBtn.onclick = () => { cleanupMatch(); startMulti(); };
+  menuBtn2.onclick = () => { showMenu(); };
+
   // ---------- init ----------
-  buildChips(); paintSlider(); loadSong();
+  buildChips(); paintSlider(); showMenu();
 })();
 </script>
 </body>
