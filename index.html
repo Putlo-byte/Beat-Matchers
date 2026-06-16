@@ -310,11 +310,14 @@
   //  (Realtime Database project; see README / setup steps.)
   // ============================================================
   const FIREBASE_CONFIG = {
-    apiKey: "",
-    authDomain: "",
-    databaseURL: "",
-    projectId: "",
-    appId: ""
+    apiKey: "AIzaSyCKYOWw-6pa9Ua_CwzUE19UGib0h0thEwk",
+    authDomain: "bpmgame.firebaseapp.com",
+    databaseURL: "https://bpmgame-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "bpmgame",
+    storageBucket: "bpmgame.firebasestorage.app",
+    messagingSenderId: "807531671784",
+    appId: "1:807531671784:web:581ff037b95e8e9d67995d",
+    measurementId: "G-YH2RRLZ160"
   };
 
   // ---------- Playlists = pools of popular artists ----------
@@ -791,8 +794,10 @@
   function ensureFirebase(){
     if(fbInited) return true;
     if(!firebaseReady()) return false;
-    try { firebase.initializeApp(FIREBASE_CONFIG); db = firebase.database(); fbInited = true; }
-    catch(e){ return false; }
+    try {
+      if(!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+      db = firebase.database(); fbInited = true;
+    } catch(e){ return false; }
     return true;
   }
 
@@ -893,7 +898,7 @@
   function runMatch(matchId, role){
     cleanupMatch();
     M = { id: matchId, role, ref: db.ref('matches/' + matchId), curRound: -1, songs: null,
-          state: null, revealed: new Set(), finished: false, oppLeftHandled: false };
+          state: null, revealed: new Set(), finished: false, oppLeftHandled: false, oppSeen: false };
     M.ref.child('present/' + me).onDisconnect().remove();
     M.ref.child('present/' + me).set(true);
     if(role === 'host'){ M.ref.onDisconnect().remove(); } // host cleans the match node if it drops
@@ -909,10 +914,13 @@
     if(!m){ if(mode === 'multi') showMenu(); return; }
     M.state = m; if(m.songs) M.songs = m.songs;
 
-    // opponent left mid-match?
-    if(m.state === 'playing' && m.present && !M.oppLeftHandled){
+    // opponent left mid-match? (only after we've actually seen them present, to avoid a join-race false positive)
+    if(m.state === 'playing' && m.present){
       const opp = opponentId(m);
-      if(opp && !m.present[opp] && M.songs){ M.oppLeftHandled = true; oppLeft(); return; }
+      if(opp && m.present[opp]) M.oppSeen = true;
+      if(opp && M.oppSeen && !m.present[opp] && !M.oppLeftHandled && !M.finished && M.songs){
+        M.oppLeftHandled = true; oppLeft(); return;
+      }
     }
 
     if(m.state === 'playing' && M.songs){
