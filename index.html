@@ -348,6 +348,41 @@
   .lbWins{ font-family:'Share Tech Mono', monospace; font-size:16px; color:var(--good); text-shadow:0 0 6px currentColor; }
   .lbWL{ font-family:'Share Tech Mono', monospace; font-size:11px; color:var(--muted); min-width:74px; text-align:right; }
   .lbEmpty{ text-align:center; color:var(--muted); font-family:'Share Tech Mono', monospace; padding:20px; }
+
+  /* ===== Phones ===== */
+  @media (max-width: 560px){
+    body{ padding: 12px 10px; }
+    .app{ padding: 18px 16px 20px; border-radius: 6px; }
+    .app::before, .app::after{ width: 9px; }
+    .app::before{ left:-9px; } .app::after{ right:-9px; }
+    header{ padding-bottom: 12px; }
+    h1{ font-size: 19px; letter-spacing: 2px; }
+    .sub{ font-size: 9.5px; letter-spacing: 1px; }
+    .logo{ width: 36px; height: 36px; }
+    .stats{ gap: 6px; }
+    .stat{ padding: 6px 9px; min-width: 0; } .stat b{ font-size: 16px; } .stat span{ font-size: 9px; }
+    .track-row{ gap: 7px; } .chip{ padding: 7px 11px; font-size: 11px; }
+    /* stage: drop the song info onto its own full-width row */
+    .stage{ flex-wrap: wrap; gap: 12px; padding: 16px; }
+    .nowInfo{ flex: 1 1 100%; order: 3; text-align: center; min-width: 0; }
+    .vinyl{ flex: 0 0 60px; width: 60px; height: 60px; }
+    .disc{ width: 60px; height: 60px; }
+    .disc .placeholder{ font-size: 24px; }
+    .timer{ flex: 0 0 58px; width: 58px; height: 58px; }
+    .timer svg{ width: 58px; height: 58px; }
+    .timer-num{ font-size: 17px; }
+    .songTitle{ font-size: 18px; white-space: normal; }
+    /* stack action buttons full-width */
+    .controls{ gap: 9px; }
+    button.btn{ min-width: 0; flex: 1 1 100%; padding: 13px; }
+    #mpControls .btn, #mpFinal .controls .btn{ flex: 1 1 100%; }
+    .result .verdict{ font-size: 32px; }
+    .stage{ min-height: 0; }
+    .hint{ font-size: 11px; }
+    .modeBtn{ min-width: 0; padding: 22px 16px; }
+    #mpScore{ padding: 10px 12px; } .mpTeam b{ font-size: 22px; } .mpTeam{ min-width: 60px; }
+    .lbName{ font-size: 12.5px; } .lbWL{ min-width: 56px; font-size: 10px; }
+  }
 </style>
 </head>
 <body>
