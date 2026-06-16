@@ -6,7 +6,7 @@
 <title>Beat Matchers — Real Songs Tempo Game</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Share+Tech+Mono&family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
   :root {
     --bg0: #0b0f1a; --bg1: #141a2e;
@@ -384,6 +384,121 @@
     #mpScore{ padding: 10px 12px; } .mpTeam b{ font-size: 22px; } .mpTeam{ min-width: 60px; }
     .lbName{ font-size: 12.5px; } .lbAcc{ min-width: 50px; font-size: 11px; } .lbWL{ display: none; }
   }
+
+  /* ============================================================
+     MINIMAL SKIN — flat designed-object (Teenage Engineering / Braun)
+     appended last; overrides the retro skin on source order
+     ============================================================ */
+  :root{
+    --text:#1b1a17; --muted:#8c897f;
+    --accent:#f2451e; --accent2:#2b6fb3;
+    --good:#1f9d57; --warn:#dd8800; --bad:#e0402a;
+    --stroke:#dcd8cf; --card:#ffffff; --panel:#efece5;
+    --shadow:0 16px 44px rgba(35,32,26,.20);
+  }
+  body{
+    font-family:'Space Grotesk', system-ui, sans-serif; color:var(--text); overflow-x:hidden;
+    background:linear-gradient(180deg,#dedcd5,#c8c6bf);
+  }
+  .app{ background:var(--panel); border:1px solid var(--stroke); border-radius:14px; box-shadow:var(--shadow);
+    padding:30px 30px 32px; backdrop-filter:none; }
+  .app::before, .app::after{ content:none !important; display:none !important; }   /* no wood caps/screws */
+
+  header{ border-bottom:1px solid var(--stroke); box-shadow:none; padding-bottom:18px; }
+  .logo{ width:40px; height:40px; border-radius:9px; border:none; background:var(--accent); color:#fff;
+    display:grid; place-items:center; box-shadow:none; text-shadow:none; font-size:0; }
+  h1{ font-family:'Space Grotesk'; font-weight:700; letter-spacing:-.6px; text-transform:none; font-size:23px; color:var(--text); text-shadow:none; }
+  .sub{ font-family:'Space Mono', monospace; color:var(--muted); font-size:11px; letter-spacing:0; text-transform:uppercase; opacity:1; }
+
+  .stat{ background:var(--card); border:1px solid var(--stroke); border-radius:9px; box-shadow:none; padding:8px 12px; }
+  .stat b{ font-family:'Space Mono', monospace; color:var(--text); text-shadow:none; font-size:19px; }
+  .stat span{ font-family:'Space Grotesk'; font-weight:500; color:var(--muted); }
+
+  .chip{ font-family:'Space Grotesk'; font-weight:500; text-transform:none; letter-spacing:0; font-size:13px; color:var(--text);
+    border:1px solid var(--stroke); border-radius:8px; background:var(--card); box-shadow:none; }
+  .chip:hover{ border-color:var(--text); filter:none; }
+  .chip.active{ color:#fff; background:var(--text); border:1px solid var(--text); text-shadow:none; }
+
+  .stage{ background:var(--card); border:1px solid var(--stroke); border-radius:10px; box-shadow:none; }
+  .nowLabel{ font-family:'Space Mono', monospace; color:var(--muted); letter-spacing:1px; text-shadow:none; }
+  .songTitle{ font-family:'Space Grotesk'; font-weight:600; color:var(--text); letter-spacing:-.3px; }
+  .songArtist{ font-family:'Space Mono', monospace; color:var(--muted); font-size:12px; }
+  .loadNote{ font-family:'Space Mono', monospace; color:var(--accent); }
+  .disc{ border:1px solid var(--stroke); box-shadow:none; }
+  .disc .placeholder{ color:var(--muted); }
+  .spindle{ background:var(--panel); border-color:var(--stroke); }
+
+  .ring-bg{ stroke:#e6e3da; } .ring-fg{ stroke:var(--accent); filter:none; }
+  .timer-num{ font-family:'Space Mono', monospace; color:var(--text); text-shadow:none; }
+  .timer.warn .ring-fg{ stroke:var(--warn);} .timer.warn .timer-num{ color:var(--warn);}
+  .timer.danger .ring-fg{ stroke:var(--bad);} .timer.danger .timer-num{ color:var(--bad);}
+
+  .sliderLabels{ font-family:'Space Mono', monospace; letter-spacing:0; text-transform:uppercase; color:var(--muted); }
+  input[type=range]{ height:6px; border-radius:3px; box-shadow:none;
+    background:linear-gradient(90deg, var(--accent) 0%, var(--accent) var(--p,50%), #dedacf var(--p,50%)); }
+  input[type=range]::-webkit-slider-thumb{ width:18px; height:30px; border-radius:4px; border:none; background:var(--text);
+    box-shadow:0 2px 6px rgba(0,0,0,.22); transition:none; }
+  input[type=range]::-moz-range-thumb{ width:18px; height:30px; border-radius:4px; border:none; background:var(--text); }
+  input[type=range].ticking::-webkit-slider-thumb{ transform:none; box-shadow:0 2px 6px rgba(0,0,0,.22); }
+  input[type=range].ticking::-moz-range-thumb{ box-shadow:0 2px 6px rgba(0,0,0,.22); }
+
+  button.btn{ font-family:'Space Grotesk'; font-weight:600; letter-spacing:0; text-transform:none; color:var(--text);
+    border:1px solid var(--stroke); border-radius:9px; background:var(--card); box-shadow:none; text-shadow:none; }
+  button.btn:hover{ filter:none; transform:none; border-color:var(--text); }
+  button.btn:active{ transform:translateY(1px); box-shadow:none; }
+  .btn.play, .btn.lock, .btn.next, .btn.ghost{ background:var(--card); color:var(--text); border:1px solid var(--stroke); }
+  .btn.play{ background:var(--accent); color:#fff; border:1px solid var(--accent); }
+  .btn.lock{ background:var(--text); color:#fff; border:1px solid var(--text); }
+  .btn.next{ background:var(--card); color:var(--text); border:1px solid var(--stroke); }
+  .btn.play:hover, .btn.lock:hover{ filter:brightness(1.06); border-color:transparent; }
+  kbd{ font-family:'Space Mono', monospace; background:var(--card); border-color:var(--stroke); color:var(--text); }
+
+  .result{ background:var(--card); border:1px solid var(--stroke); border-radius:10px; box-shadow:none; }
+  .result.perfect{ border-color:var(--good); box-shadow:none; animation:none; }
+  .result .verdict{ font-family:'Space Mono', monospace; text-shadow:none; }
+  .result .detail{ font-family:'Space Mono', monospace; }
+
+  .menuTitle{ font-family:'Space Mono', monospace; letter-spacing:1px; color:var(--muted); text-shadow:none; }
+  .modeBtn{ border:1px solid var(--stroke); border-radius:11px; color:var(--text); background:var(--card); box-shadow:none; }
+  .modeBtn:hover{ transform:none; border:1px solid var(--text); }
+  .modeBtn .mName{ font-family:'Space Grotesk'; letter-spacing:-.3px; text-transform:none; }
+  .modeBtn .mDesc{ color:var(--muted); font-family:'Space Grotesk'; }
+  #acctBar{ background:var(--card); border:1px solid var(--stroke); box-shadow:none; }
+  #acctName{ font-family:'Space Grotesk'; text-transform:none; color:var(--text); }
+  #acctRecord{ font-family:'Space Mono', monospace; color:var(--muted); }
+  #acctAvatar{ border:2px solid var(--accent); box-shadow:none; }
+
+  .qSpinner{ border:5px solid #e6e3da; border-top-color:var(--accent); }
+  .qTitle{ font-family:'Space Grotesk'; text-transform:none; }
+  .qSub{ font-family:'Space Mono', monospace; }
+
+  #mpScore{ background:var(--card); border:1px solid var(--stroke); box-shadow:none; }
+  .mpTeam b{ font-family:'Space Mono', monospace; text-shadow:none; }
+  .mpTeam.you b{ color:var(--good);} .mpTeam.opp b{ color:var(--bad);}
+  .mpTeam span, .mpRoundLabel{ font-family:'Space Grotesk'; letter-spacing:0; text-transform:none; }
+  .revealTrack{ background:#e7e4dc; border:1px solid var(--stroke); box-shadow:none; }
+  .revMark.you{ background:var(--good);} .revMark.opp{ background:var(--bad);}
+  .revMark.target{ width:2px; height:26px; background:var(--text); border-radius:1px; font-size:0; }
+  .revCol .acc, .finalScores b{ font-family:'Space Mono', monospace; text-shadow:none; }
+  .revCol .who, .revWinner, .finalWinner, .revLabels{ font-family:'Space Grotesk'; letter-spacing:0; text-transform:none; }
+
+  .lbTitle{ font-family:'Space Grotesk'; text-transform:none; letter-spacing:-.3px; color:var(--text); text-shadow:none; }
+  .lbRow{ background:var(--card); border:1px solid var(--stroke); box-shadow:none; }
+  .lbRow.me{ border:1px solid var(--accent); background:#fff6f3; }
+  .lbRank{ font-family:'Space Mono', monospace; color:var(--text); text-shadow:none; }
+  .lbAvatar{ border:1px solid var(--stroke); background:#e6e3da; }
+  .lbName{ font-family:'Space Grotesk'; text-transform:none; }
+  .lbWins{ font-family:'Space Mono', monospace; color:var(--good); text-shadow:none; }
+  .lbAcc{ font-family:'Space Mono', monospace; color:var(--accent); }
+  .lbWL{ font-family:'Space Mono', monospace; color:var(--muted); }
+
+  .hint{ font-family:'Space Grotesk'; color:var(--muted); }
+  .credit{ font-family:'Space Mono', monospace; color:var(--muted); }
+
+  /* small line icons sit inside buttons/labels */
+  .ico{ width:15px; height:15px; display:inline-block; vertical-align:-2px; }
+  .modeBtn .micon{ width:30px; height:30px; color:var(--accent); }
+  .lbMedal{ width:22px; height:22px; }
 </style>
 </head>
 <body>
@@ -391,7 +506,7 @@
 <div class="app">
   <header>
     <div class="title">
-      <div class="logo">🎚️</div>
+      <div class="logo"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><line x1="6" y1="3" x2="6" y2="21"/><line x1="12" y1="3" x2="12" y2="21"/><line x1="18" y1="3" x2="18" y2="21"/><circle cx="6" cy="8" r="2.4" fill="#fff" stroke="none"/><circle cx="12" cy="15" r="2.4" fill="#fff" stroke="none"/><circle cx="18" cy="7" r="2.4" fill="#fff" stroke="none"/></svg></div>
       <div>
         <h1>Beat Matchers</h1>
         <div class="sub">Stereo Tempo Matcher · Model BM-88</div>
@@ -417,21 +532,23 @@
     <div class="menuTitle">Choose a mode</div>
     <div class="menuBtns">
       <button class="modeBtn" id="spBtn">
-        <span class="mIcon">🎮</span><span class="mName">Singleplayer</span>
+        <svg class="micon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c0-3.9 3.1-7 7-7s7 3.1 7 7"/></svg>
+        <span class="mName">Singleplayer</span>
         <span class="mDesc">Match songs solo and chase your high score.</span>
       </button>
       <button class="modeBtn" id="mpBtn">
-        <span class="mIcon">🌐</span><span class="mName">Multiplayer 1v1</span>
+        <svg class="micon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="9" r="2.8"/><circle cx="16" cy="9" r="2.8"/><path d="M3 19c0-2.8 2.2-4.5 5-4.5s5 1.7 5 4.5"/><path d="M21 19c0-2.8-2.2-4.5-5-4.5"/></svg>
+        <span class="mName">Multiplayer 1v1</span>
         <span class="mDesc">Sign in, queue up, and duel a random opponent over 5 songs.</span>
       </button>
     </div>
-    <button class="btn next" id="leaderboardBtn" style="margin-top:16px;width:100%;">🏆 Leaderboard</button>
+    <button class="btn next" id="leaderboardBtn" style="margin-top:16px;width:100%;">Leaderboard</button>
     <div id="mpSetupNote" class="setupNote" hidden></div>
   </div>
 
   <!-- ===== Leaderboard ===== -->
   <div id="leaderboardView" hidden>
-    <div class="lbTitle">🏆 Leaderboard — Most Wins</div>
+    <div class="lbTitle">Leaderboard — Most Wins</div>
     <div id="lbList" class="lbList">Loading…</div>
     <button class="btn ghost" id="lbBack" style="margin-top:14px;width:100%;">← Back to Menu</button>
   </div>
@@ -457,7 +574,7 @@
 
   <div class="stage">
     <div class="vinyl">
-      <div class="disc" id="disc"><div class="placeholder">🎵</div></div>
+      <div class="disc" id="disc"><div class="placeholder"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg></div></div>
       <div class="spindle"></div>
     </div>
     <div class="nowInfo">
@@ -473,18 +590,18 @@
   </div>
 
   <div class="sliderWrap">
-    <div class="sliderLabels"><span>🐢 Slower</span><span>Faster 🐇</span></div>
+    <div class="sliderLabels"><span>Slower</span><span>Faster</span></div>
     <input type="range" id="slider" min="0" max="100" step="0.5" value="50" disabled />
   </div>
 
   <div class="controls" id="spControls">
-    <button class="btn play" id="playBtn" disabled>▶ Play</button>
-    <button class="btn lock" id="lockBtn" disabled>🔒 Lock In</button>
-    <button class="btn next" id="nextBtn">Next Song →</button>
+    <button class="btn play" id="playBtn" disabled>Play</button>
+    <button class="btn lock" id="lockBtn" disabled>Lock In</button>
+    <button class="btn next" id="nextBtn">Next Song</button>
   </div>
 
   <div class="controls" id="mpControls" hidden>
-    <button class="btn lock" id="mpLockBtn" disabled>🔒 Lock In Guess</button>
+    <button class="btn lock" id="mpLockBtn" disabled>Lock In Guess</button>
   </div>
 
   <div class="result" id="result">
@@ -495,11 +612,11 @@
   <!-- ===== Multiplayer round reveal ===== -->
   <div id="mpReveal" hidden>
     <div class="revealTrack">
-      <div class="revMark target" id="revTarget" title="Original tempo">🎯<span class="tag" style="color:var(--text)">Original</span></div>
+      <div class="revMark target" id="revTarget" title="Original tempo"><span class="tag" style="color:var(--text)">Original</span></div>
       <div class="revMark dot you" id="revYou"><span class="tag" style="color:var(--good)">You</span></div>
       <div class="revMark dot opp" id="revOpp"><span class="tag" style="color:var(--bad)">Opp</span></div>
     </div>
-    <div class="revLabels"><span>🐢 Slower</span><span>Faster 🐇</span></div>
+    <div class="revLabels"><span>Slower</span><span>Faster</span></div>
     <div class="revStats" id="revStats"></div>
     <div class="revWinner" id="revWinner"></div>
   </div>
@@ -550,25 +667,25 @@
   // API, and grabs a random one — so the song pool is effectively endless and
   // rarely repeats (a recently-played list also blocks short-term repeats).
   const PLAYLISTS = [
-    { name: "🔥 Big Hits", artists: [
+    { name: "Big Hits", artists: [
       "The Weeknd","Harry Styles","Dua Lipa","Billie Eilish","Taylor Swift","Olivia Rodrigo",
       "Ed Sheeran","Bruno Mars","Justin Bieber","Doja Cat","Sabrina Carpenter","SZA",
       "Post Malone","Ariana Grande","Drake","Miley Cyrus","Lil Nas X","Glass Animals",
       "Travis Scott","Bad Bunny","Harry Styles","Tate McRae","Benson Boone","Chappell Roan",
     ]},
-    { name: "🕺 2010s", artists: [
+    { name: "2010s", artists: [
       "Adele","Daft Punk","Pharrell Williams","Lorde","OneRepublic","Imagine Dragons",
       "Maroon 5","Sia","The Chainsmokers","Calvin Harris","Sam Smith","Lana Del Rey",
       "Kendrick Lamar","Macklemore","Avicii","Ellie Goulding","Bastille","Fun",
       "Florence and the Machine","Hozier","The 1975","Twenty One Pilots",
     ]},
-    { name: "💿 Throwbacks", artists: [
+    { name: "Throwbacks", artists: [
       "The Killers","The White Stripes","OutKast","Britney Spears","Beyonce","50 Cent",
       "Queen","Michael Jackson","Guns N Roses","Nirvana","Oasis","Toto",
       "ABBA","Fleetwood Mac","Eminem","Coldplay","Red Hot Chili Peppers","Green Day",
       "The Black Eyed Peas","Usher","Gwen Stefani","Linkin Park",
     ]},
-    { name: "🎤 Pop Icons", artists: [
+    { name: "Pop Icons", artists: [
       "Lady Gaga","Katy Perry","Rihanna","Beyonce","Adele","Lizzo",
       "Doja Cat","Olivia Rodrigo","Sabrina Carpenter","Tate McRae","Miley Cyrus","P!nk",
       "Ariana Grande","Dua Lipa","Charlie Puth","Shawn Mendes","Camila Cabello","Selena Gomez",
@@ -745,7 +862,7 @@
   }
   function autoLock(){
     if(locked) return;
-    loadNote.textContent = "⏰ Time's up — auto-locked!";
+    loadNote.textContent = "Time's up — auto-locked!";
     lockIn();
   }
 
@@ -819,7 +936,7 @@
     resetTimer();
     resultEl.classList.remove("show", "perfect");
     playBtn.disabled = true; lockBtn.disabled = true; slider.disabled = true;
-    playBtn.textContent = "▶ Play";
+    playBtn.textContent = "Play";
     disc.innerHTML = '<div class="placeholder">⏳</div>';
     songTitle.textContent = "Loading…"; songArtist.textContent = "";
     loadNote.textContent = "Fetching a track…";
@@ -852,7 +969,7 @@
         songTitle.textContent = hit.trackName;
         songArtist.textContent = hit.artistName;
         const art = (hit.artworkUrl100 || "").replace("100x100", "300x300");
-        disc.innerHTML = art ? `<img src="${art}" alt="">` : '<div class="placeholder">🎵</div>';
+        disc.innerHTML = art ? `<img src="${art}" alt="">` : '<div class="placeholder"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg></div>';
 
         _spLock = null;
         startBpmDetect(hit.previewUrl);    // analyze the real tempo in the background
@@ -900,14 +1017,14 @@
     if(!ready) return Promise.resolve(false);
     applyRate();
     return player.play().then(()=>{
-      playing=true; if(!locked) roundActive=true; playBtn.textContent="⏸ Pause";
+      playing=true; if(!locked) roundActive=true; playBtn.textContent="Pause";
       if(!locked) loadNote.textContent="";
       return true;
-    }).catch(()=>{ if(!locked) loadNote.textContent="Tap ▶ Play to start the song."; return false; });
+    }).catch(()=>{ if(!locked) loadNote.textContent="Tap Play to start the song."; return false; });
   }
   function togglePlay(){
     if(!ready) return;
-    if(playing){ player.pause(); playing=false; playBtn.textContent="▶ Play"; }
+    if(playing){ player.pause(); playing=false; playBtn.textContent="Play"; }
     else startPlayback();
   }
 
@@ -937,8 +1054,8 @@
     resultEl.classList.toggle("perfect", perfect);
     countTo(verdictEl, 100, accuracy);   // count down from 100% to the real accuracy
     loadNote.textContent = perfect
-      ? "🎆 Bang on! Now playing at the original tempo."
-      : "🎧 Now playing at the original tempo — hear the difference.";
+      ? "Bang on! Now playing at the original tempo."
+      : "Now playing at the original tempo — hear the difference.";
 
     if (perfect) celebrate();
 
@@ -965,7 +1082,7 @@
     if(!_spLock) return;
     const { color, sign, pts, rate } = _spLock;
     const bpm = currentBPM
-      ? ` &nbsp;·&nbsp; 🥁 <b>≈${Math.round(currentBPM)} BPM</b> <span style="color:var(--muted)">(you guessed ${Math.round(currentBPM * rate)})</span>`
+      ? ` &nbsp;·&nbsp; <b>≈${Math.round(currentBPM)} BPM</b> <span style="color:var(--muted)">(you guessed ${Math.round(currentBPM * rate)})</span>`
       : "";
     detailEl.innerHTML = `<b style="color:${color}">${sign}${pts}</b> points${bpm}`;
   }
@@ -1394,7 +1511,7 @@
     slider.disabled = false; mpLockBtn.disabled = false;
     slider.value = song.startPos; lastTickPos = Math.round(song.startPos); paintSlider();
     songTitle.textContent = song.trackName; songArtist.textContent = song.artistName;
-    disc.innerHTML = song.art ? `<img src="${song.art}" alt="">` : '<div class="placeholder">🎵</div>';
+    disc.innerHTML = song.art ? `<img src="${song.art}" alt="">` : '<div class="placeholder"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg></div>';
     loadNote.textContent = "Match the tempo by ear, then Lock In.";
     _mpRev = null;
     startBpmDetect(song.previewUrl);   // analyze the real tempo in the background
@@ -1452,7 +1569,7 @@
       `<div class="revCol"><div class="who" style="color:var(--bad)">${oppNm}</div>` +
       `<div class="acc" style="color:var(--bad)">${theirs.acc.toFixed(2)}%</div><div class="pts">${fmt(theirs.pts)}${gb(theirs.pos)}</div></div>`;
     const w = mine.acc > theirs.acc ? 'you' : (theirs.acc > mine.acc ? 'opp' : 'tie');
-    const wt = w === 'you' ? "🏆 You win this round!" : w === 'opp' ? `${oppNm} takes this round` : "Round tied";
+    const wt = w === 'you' ? "You win this round!" : w === 'opp' ? `${oppNm} takes this round` : "Round tied";
     const wc = w === 'you' ? "var(--good)" : w === 'opp' ? "var(--bad)" : "var(--muted)";
     revWinner.innerHTML = `<span style="color:${wc}">${wt}</span>` +
       (currentBPM ? `<div style="font-size:12px;color:var(--muted);margin-top:6px;font-family:'Share Tech Mono',monospace;">Original ≈ ${Math.round(currentBPM)} BPM</div>` : "");
@@ -1478,8 +1595,8 @@
     const t = totals(m, 4);
     mpYouScore.textContent = t.y; mpOppScore.textContent = t.o;
     let txt, color, outcome;
-    if(t.y > t.o){ txt = "🏆 You Win!"; color = "var(--good)"; outcome = 'win'; }
-    else if(t.o > t.y){ txt = "You Lose 😬"; color = "var(--bad)"; outcome = 'loss'; }
+    if(t.y > t.o){ txt = "You win"; color = "var(--good)"; outcome = 'win'; }
+    else if(t.o > t.y){ txt = "You lose"; color = "var(--bad)"; outcome = 'loss'; }
     else { txt = "It's a Tie!"; color = "var(--warn)"; outcome = 'tie'; }
     finalWinner.textContent = txt; finalWinner.style.color = color;
     const oppNm = (M && M.oppName) || "Opponent";
@@ -1515,42 +1632,55 @@
       p.updated = Date.now();
       return p;
     });
+    _lbCache = null; // standings changed — force a fresh fetch next time the board opens
   }
 
   function oppLeft(){
     stopMpTimer(); try{ player.pause(); }catch(e){} playing = false;
     show(mpControls, false); show(mpReveal, false); show(mpFinal, true);
-    finalWinner.textContent = "🏆 You Win!"; finalWinner.style.color = "var(--good)";
+    finalWinner.textContent = "You win"; finalWinner.style.color = "var(--good)";
     finalScores.textContent = "Your opponent left the match.";
     M.finished = true; recordResult('win', M.state);
   }
 
   // ---- Leaderboard ----
+  // Small in-memory cache so re-opening the leaderboard within 30s doesn't re-query Firebase.
+  let _lbCache = null, _lbCacheAt = 0;
+  const LB_CACHE_MS = 30000, LB_TOP_N = 50;
   async function showLeaderboard(){
     if(!ensureFirebase()){ showSetupNote(); return; }
     show(menuView, false); show(queueView, false); show(playView, false); show(leaderboardView, true);
     show(headerStats, false);
+    // Serve a fresh cache straight away — avoids a redundant read on quick back-and-forth.
+    if(_lbCache && Date.now() - _lbCacheAt < LB_CACHE_MS){ renderLeaderboard(_lbCache); return; }
     lbList.innerHTML = '<div class="lbEmpty">Loading…</div>';
     try {
-      // fetch all players + rank client-side (no DB index needed)
-      const snap = await db.ref('players').get();
+      // Server-side: fetch ONLY the top N players by wins instead of the whole table.
+      // Requires ".indexOn": ["wins"] on /players in the DB rules — without it Firebase
+      // still downloads every record and filters client-side (defeating the optimization).
+      const snap = await db.ref('players').orderByChild('wins').limitToLast(LB_TOP_N).get();
       const arr = [];
       snap.forEach(c => { const v = c.val() || {}; arr.push({ uid: c.key, name: v.name || 'Player', photo: v.photo || '', wins: v.wins || 0, losses: v.losses || 0, games: v.games || 0, accSum: v.accSum || 0, accCount: v.accCount || 0 }); });
+      // limitToLast returns ascending by wins; apply the full ranking on just these N rows.
       arr.sort((a, b) => b.wins - a.wins || a.losses - b.losses || b.games - a.games);
-      arr.splice(50); // top 50
-      if(!arr.length){ lbList.innerHTML = '<div class="lbEmpty">No games played yet — be the first to win!</div>'; return; }
-      lbList.innerHTML = arr.map((p, i) => {
-        const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : ('#' + (i + 1));
-        const av = p.photo ? `<img class="lbAvatar" src="${p.photo}" alt="">` : `<div class="lbAvatar"></div>`;
-        const mine = (user && p.uid === me) ? ' me' : '';
-        const nm = String(p.name).replace(/[<>&]/g, '');
-        const avg = p.accCount ? (p.accSum / p.accCount).toFixed(1) + '%' : '—';
-        return `<div class="lbRow${mine}"><div class="lbRank">${medal}</div>${av}` +
-               `<div class="lbName">${nm}${mine ? ' (you)' : ''}</div>` +
-               `<div class="lbAcc" title="Average accuracy">${avg}</div>` +
-               `<div class="lbWins">${p.wins}W</div><div class="lbWL">${p.wins}-${p.losses}</div></div>`;
-      }).join('');
+      _lbCache = arr; _lbCacheAt = Date.now();
+      renderLeaderboard(arr);
     } catch(e){ lbList.innerHTML = '<div class="lbEmpty">Couldn\'t load leaderboard.</div>'; }
+  }
+
+  function renderLeaderboard(arr){
+    if(!arr.length){ lbList.innerHTML = '<div class="lbEmpty">No games played yet — be the first to win!</div>'; return; }
+    lbList.innerHTML = arr.map((p, i) => {
+      const medal = String(i + 1);
+      const av = p.photo ? `<img class="lbAvatar" src="${p.photo}" alt="">` : `<div class="lbAvatar"></div>`;
+      const mine = (user && p.uid === me) ? ' me' : '';
+      const nm = String(p.name).replace(/[<>&]/g, '');
+      const avg = p.accCount ? (p.accSum / p.accCount).toFixed(1) + '%' : '—';
+      return `<div class="lbRow${mine}"><div class="lbRank">${medal}</div>${av}` +
+             `<div class="lbName">${nm}${mine ? ' (you)' : ''}</div>` +
+             `<div class="lbAcc" title="Average accuracy">${avg}</div>` +
+             `<div class="lbWins">${p.wins}W</div><div class="lbWL">${p.wins}-${p.losses}</div></div>`;
+    }).join('');
   }
 
   qCancel.onclick = () => {
