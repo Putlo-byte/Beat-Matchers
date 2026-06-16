@@ -649,6 +649,55 @@
   }
   slider.addEventListener('change', _flushRate); // apply immediately when the fader is released
 
+  // ---------- Detect the song's real BPM from its preview (shown in results) ----------
+  let analysisCtx = null, currentBPM = null, bpmToken = 0, _spLock = null, _mpRev = null;
+  function startBpmDetect(url){
+    currentBPM = null;
+    const tok = ++bpmToken;
+    detectSongBPM(url, tok);
+  }
+  async function detectSongBPM(url, tok){
+    try {
+      if(!analysisCtx) analysisCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const arr = await (await fetch(url)).arrayBuffer();
+      const audio = await analysisCtx.decodeAudioData(arr);
+      if(tok !== bpmToken) return;                  // a newer song superseded us
+      const bpm = await computeBPM(audio);
+      if(tok === bpmToken && bpm){
+        currentBPM = bpm;
+        if(_spLock && resultEl.classList.contains("show")) renderSpDetail(); // fill in if result already shown
+        if(_mpRev && !mpReveal.hidden) renderMpReveal();
+      }
+    } catch(e){ /* CORS/decoding failed — just don't show a BPM */ }
+  }
+  async function computeBPM(audioBuffer){
+    // low/high-pass to isolate the kick, find peaks, histogram the inter-peak tempos
+    const oac = new OfflineAudioContext(1, audioBuffer.length, audioBuffer.sampleRate);
+    const src = oac.createBufferSource(); src.buffer = audioBuffer;
+    const lp = oac.createBiquadFilter(); lp.type = "lowpass";  lp.frequency.value = 150;
+    const hp = oac.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 100;
+    src.connect(lp); lp.connect(hp); hp.connect(oac.destination); src.start(0);
+    const r = await oac.startRendering();
+    const data = r.getChannelData(0), sr = r.sampleRate;
+    let max = 0; for(let i=0;i<data.length;i++){ const a = data[i] > 0 ? data[i] : -data[i]; if(a > max) max = a; }
+    if(max <= 0) return null;
+    let peaks = [], threshold = max * 0.9;
+    while(peaks.length < 30 && threshold > max * 0.3){
+      peaks = [];
+      for(let i=0;i<data.length;){ if(data[i] > threshold){ peaks.push(i); i += Math.floor(sr*0.25); } else i++; }
+      threshold -= max * 0.05;
+    }
+    const counts = {};
+    for(let i=0;i<peaks.length;i++)
+      for(let j=1;j<10 && i+j<peaks.length;j++){
+        let bpm = 60 * sr / (peaks[i+j] - peaks[i]);
+        while(bpm < 90) bpm *= 2; while(bpm > 180) bpm /= 2;  // fold into a typical range
+        bpm = Math.round(bpm); counts[bpm] = (counts[bpm] || 0) + 1;
+      }
+    let best = 0, bb = 0; for(const b in counts){ if(counts[b] > best){ best = counts[b]; bb = +b; } }
+    return bb || null;
+  }
+
   // ---------- Detent "haptic-ish" feedback on slider movement ----------
   // NOTE: browsers can't drive the Mac trackpad Taptic Engine, so this fakes the
   // feel with a short click + a thumb pop, plus navigator.vibrate() for phones.
@@ -804,6 +853,8 @@
         const art = (hit.artworkUrl100 || "").replace("100x100", "300x300");
         disc.innerHTML = art ? `<img src="${art}" alt="">` : '<div class="placeholder">🎵</div>';
 
+        _spLock = null;
+        startBpmDetect(hit.previewUrl);    // analyze the real tempo in the background
         await prime(hit.previewUrl, myToken);
         if (myToken !== loadToken) return;
         ready = true;
@@ -865,6 +916,7 @@
     locked = true;
     slider.disabled = true; lockBtn.disabled = true;
     const err = Math.abs(parseFloat(slider.value) - targetPos); // ≈ % tempo off
+    const rateAtLock = rateFromPos(parseFloat(slider.value));   // for "you guessed X BPM"
 
     // ----- point system (steep high-accuracy reward; see scoreFor) -----
     let pts = scoreFor(err);
@@ -878,7 +930,8 @@
     const color = gotPoints ? "var(--good)" : "var(--bad)";
     const sign = pts >= 0 ? "+" : "";
     verdictEl.style.color = color;
-    detailEl.innerHTML = `<b style="color:${color}">${sign}${pts}</b> points`;
+    _spLock = { color, sign, pts, rate: rateAtLock };
+    renderSpDetail();
     resultEl.classList.add("show");
     resultEl.classList.toggle("perfect", perfect);
     countTo(verdictEl, 100, accuracy);   // count down from 100% to the real accuracy
@@ -904,6 +957,16 @@
     requestAnimationFrame(step);
     // guarantee we land exactly on the original tempo even if rAF is throttled (background tab)
     setTimeout(()=>{ slider.value = dest; paintSlider(); applyRate(); }, dur + 120);
+  }
+
+  // singleplayer result line: points + the song's real BPM (and what you guessed)
+  function renderSpDetail(){
+    if(!_spLock) return;
+    const { color, sign, pts, rate } = _spLock;
+    const bpm = currentBPM
+      ? ` &nbsp;·&nbsp; 🥁 <b>≈${Math.round(currentBPM)} BPM</b> <span style="color:var(--muted)">(you guessed ${Math.round(currentBPM * rate)})</span>`
+      : "";
+    detailEl.innerHTML = `<b style="color:${color}">${sign}${pts}</b> points${bpm}`;
   }
 
   // animate a number ticking from `from`% to `to`% with 2 decimals
@@ -1332,6 +1395,8 @@
     songTitle.textContent = song.trackName; songArtist.textContent = song.artistName;
     disc.innerHTML = song.art ? `<img src="${song.art}" alt="">` : '<div class="placeholder">🎵</div>';
     loadNote.textContent = "Match the tempo by ear, then Lock In.";
+    _mpRev = null;
+    startBpmDetect(song.previewUrl);   // analyze the real tempo in the background
     mpLoadPlay(song.previewUrl);
     startMpTimer();
   }
@@ -1367,20 +1432,29 @@
     revYou.style.left = clamp(mine.pos, 0, 100) + "%";
     revOpp.style.left = clamp(theirs.pos, 0, 100) + "%";
     revTarget.style.left = clamp(target, 0, 100) + "%";
-    const fmt = p => (p >= 0 ? "+" : "") + p + " pts";
-    const oppNm = (M && M.oppName) || "Opponent";
-    revStats.innerHTML =
-      `<div class="revCol"><div class="who" style="color:var(--good)">You</div>` +
-      `<div class="acc" style="color:var(--good)">${mine.acc.toFixed(2)}%</div><div class="pts">${fmt(mine.pts)}</div></div>` +
-      `<div class="revCol"><div class="who" style="color:var(--bad)">${oppNm}</div>` +
-      `<div class="acc" style="color:var(--bad)">${theirs.acc.toFixed(2)}%</div><div class="pts">${fmt(theirs.pts)}</div></div>`;
-    const w = mine.acc > theirs.acc ? 'you' : (theirs.acc > mine.acc ? 'opp' : 'tie');
-    revWinner.textContent = w === 'you' ? "🏆 You win this round!" : w === 'opp' ? `${oppNm} takes this round` : "Round tied";
-    revWinner.style.color = w === 'you' ? "var(--good)" : w === 'opp' ? "var(--bad)" : "var(--muted)";
+    _mpRev = { mine, theirs, target };
+    renderMpReveal();
     updateMpTotals(r);
     // play the song back at its true tempo during the reveal
     if(!playing) mpLoadPlay(M.songs[r].previewUrl);
     animateTo(target);
+  }
+  function renderMpReveal(){
+    if(!_mpRev) return;
+    const { mine, theirs, target } = _mpRev;
+    const oppNm = (M && M.oppName) || "Opponent";
+    const fmt = p => (p >= 0 ? "+" : "") + p + " pts";
+    const gb = pos => currentBPM ? ` · ≈${Math.round(currentBPM * (1 + (pos - target) / 100))} BPM` : "";
+    revStats.innerHTML =
+      `<div class="revCol"><div class="who" style="color:var(--good)">You</div>` +
+      `<div class="acc" style="color:var(--good)">${mine.acc.toFixed(2)}%</div><div class="pts">${fmt(mine.pts)}${gb(mine.pos)}</div></div>` +
+      `<div class="revCol"><div class="who" style="color:var(--bad)">${oppNm}</div>` +
+      `<div class="acc" style="color:var(--bad)">${theirs.acc.toFixed(2)}%</div><div class="pts">${fmt(theirs.pts)}${gb(theirs.pos)}</div></div>`;
+    const w = mine.acc > theirs.acc ? 'you' : (theirs.acc > mine.acc ? 'opp' : 'tie');
+    const wt = w === 'you' ? "🏆 You win this round!" : w === 'opp' ? `${oppNm} takes this round` : "Round tied";
+    const wc = w === 'you' ? "var(--good)" : w === 'opp' ? "var(--bad)" : "var(--muted)";
+    revWinner.innerHTML = `<span style="color:${wc}">${wt}</span>` +
+      (currentBPM ? `<div style="font-size:12px;color:var(--muted);margin-top:6px;font-family:'Share Tech Mono',monospace;">Original ≈ ${Math.round(currentBPM)} BPM</div>` : "");
   }
 
   function totals(m, upto){
