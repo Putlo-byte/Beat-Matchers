@@ -631,12 +631,6 @@
     </div>
   </div>
 
-  <div class="hint" id="hintSP">
-    The song is playing at the <b>wrong tempo</b>. There's no meter and no hint — trust your memory of how the
-    track actually goes, slide until it feels right, then <kbd>Lock In</kbd>. <kbd>←</kbd> <kbd>→</kbd> fine-tune.
-  </div>
-  <div class="credit">30-second song previews provided by the Apple / iTunes Search API.</div>
-
   </div><!-- /#play -->
 
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -715,7 +709,7 @@
   const acctAvatar=$("acctAvatar"), acctName=$("acctName"), acctRecord=$("acctRecord"),
         signInBtn=$("signInBtn"), signOutBtn=$("signOutBtn"),
         leaderboardBtn=$("leaderboardBtn"), leaderboardView=$("leaderboardView"), lbList=$("lbList"), lbBack=$("lbBack");
-  const show = (el, on) => { el.hidden = !on; };
+  const show = (el, on) => { if(el) el.hidden = !on; };
 
   // ---------- State ----------
   const player = new Audio();
