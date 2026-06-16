@@ -745,6 +745,22 @@
   }
   function hash(str){ let h=0; for(let i=0;i<str.length;i++){ h=(h*31+str.charCodeAt(i))|0; } return h; }
 
+  // JSONP lookup of a single track by iTunes id (used to get preview URLs for chart songs)
+  let _jsonpN = 0;
+  function itunesLookup(id){
+    return new Promise((resolve, reject) => {
+      const cb = "itlk_" + (++_jsonpN);
+      const url = "https://itunes.apple.com/lookup?id=" + encodeURIComponent(id) + "&entity=song&callback=" + cb;
+      const s = document.createElement("script");
+      let done = false;
+      const cleanup = () => { delete window[cb]; s.remove(); };
+      const timer = setTimeout(() => { if(!done){ done = true; cleanup(); reject(new Error("timeout")); } }, 9000);
+      window[cb] = (data) => { if(done) return; done = true; clearTimeout(timer); cleanup(); resolve((data && data.results) || []); };
+      s.onerror = () => { if(!done){ done = true; clearTimeout(timer); cleanup(); reject(new Error("network")); } };
+      s.src = url; document.head.appendChild(s);
+    });
+  }
+
   // ---------- Load a song ----------
   async function loadSong(){
     const myToken = ++loadToken;
@@ -1149,7 +1165,7 @@
     });
   }
   async function hostCreateMatch(opp){
-    qTitle.textContent = "Opponent found!"; qSub.textContent = "Loading 5 songs…";
+    qTitle.textContent = "Opponent found!"; qSub.textContent = "Loading 5 chart songs…";
     const oppId = opp.id;
     const matchId = 'm' + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
     const mref = db.ref('matches/' + matchId);
@@ -1162,13 +1178,57 @@
     while(songs.length < 5 && guard < 60){
       guard++;
       if(mode !== 'multi') return;
-      const s = await resolveRandomTrack();
+      const s = await resolveChartTrack();
       if(s) songs.push(s);
     }
     if(songs.length < 5){ qSub.textContent = "Couldn't load songs — try again."; return; }
     await mref.child('songs').set(songs);
     await mref.update({ state: 'playing', startedAt: Date.now() });
     runMatch(matchId, 'host');
+  }
+
+  // ---- Live "Top Songs" chart (Apple/iTunes RSS) ----
+  let topChart = null;
+  async function loadTopChart(){
+    if(topChart) return topChart;
+    try {
+      const res = await fetch("https://itunes.apple.com/us/rss/topsongs/limit=200/json");
+      const d = await res.json();
+      const entries = (d && d.feed && d.feed.entry) || [];
+      topChart = entries.map(e => ({
+        id:     e.id && e.id.attributes && e.id.attributes["im:id"],
+        name:   e["im:name"] && e["im:name"].label,
+        artist: e["im:artist"] && e["im:artist"].label,
+        art:    (e["im:image"] && e["im:image"].length) ? e["im:image"][e["im:image"].length - 1].label : ""
+      })).filter(x => x.id);
+      if(!topChart.length) topChart = null;
+    } catch(e){ topChart = null; }
+    return topChart;
+  }
+
+  // resolve a random song from the live charts into a playable round payload
+  async function resolveChartTrack(){
+    const chart = await loadTopChart();
+    if(!chart || !chart.length) return resolveRandomTrack();   // charts unavailable → fall back to artist pool
+    for(let attempt = 0; attempt < 8; attempt++){
+      const fresh = chart.filter(c => !recent.has(Number(c.id)));
+      const pool = fresh.length ? fresh : chart;
+      const pick = pool[randInt(0, pool.length - 1)];
+      try {
+        const results = await itunesLookup(pick.id);
+        const hit = results.find(r => r.previewUrl);
+        if(!hit) continue;
+        rememberTrack(hit.trackId);
+        const target = randInt(28, 71) + Math.random();
+        let off = randInt(20, 38) * (Math.random() < 0.5 ? -1 : 1);
+        let start = clamp(target + off, 2, 98);
+        if(Math.abs(start - target) < 16) start = clamp(target + (start < target ? -20 : 20), 2, 98);
+        return { trackName: hit.trackName || pick.name, artistName: hit.artistName || pick.artist,
+                 art: (hit.artworkUrl100 || pick.art || "").replace("100x100", "300x300"),
+                 previewUrl: hit.previewUrl, targetPos: target, startPos: start };
+      } catch(e){}
+    }
+    return resolveRandomTrack();
   }
 
   // resolve one random popular track into a playable round payload
