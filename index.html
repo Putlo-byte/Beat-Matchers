@@ -322,6 +322,32 @@
   .hint{ font-family:system-ui, sans-serif; color:var(--muted); }
   .setupNote{ font-family:system-ui, sans-serif; }
   .credit{ font-family:'Share Tech Mono', monospace; color:#6b6356; }
+
+  /* ===== Account bar + leaderboard ===== */
+  #acctBar{ display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
+    background:linear-gradient(180deg,#0a0c0e,#15161a); border:1px solid #000; border-radius:6px; padding:10px 14px; margin-bottom:18px;
+    box-shadow:inset 0 2px 8px rgba(0,0,0,.8); }
+  #acctInfo{ display:flex; align-items:center; gap:10px; text-align:left; }
+  #acctAvatar{ width:34px; height:34px; border-radius:50%; border:2px solid var(--led); box-shadow:0 0 8px var(--ledglow); }
+  #acctText{ display:flex; flex-direction:column; line-height:1.25; }
+  #acctName{ font-family:'Oswald'; font-weight:600; text-transform:uppercase; letter-spacing:1px; font-size:14px; color:var(--text); }
+  #acctRecord{ font-family:'Share Tech Mono', monospace; font-size:11px; color:var(--led); }
+  #acctBar .btn{ flex:none; padding:9px 16px; font-size:12px; }
+
+  #leaderboardView{ padding:6px 2px; }
+  .lbTitle{ font-family:'Oswald'; text-transform:uppercase; letter-spacing:2px; color:var(--led); text-shadow:0 0 8px var(--ledglow);
+    text-align:center; font-size:18px; margin:6px 0 16px; }
+  .lbList{ display:flex; flex-direction:column; gap:6px; }
+  .lbRow{ display:flex; align-items:center; gap:12px; padding:9px 14px; border-radius:5px; border:1px solid #000;
+    background:linear-gradient(180deg,#0a0c0e,#15161a); box-shadow:inset 0 1px 4px rgba(0,0,0,.7); }
+  .lbRow.me{ border-top:2px solid var(--led); background:linear-gradient(180deg,#211c10,#15120a); }
+  .lbRank{ font-family:'Share Tech Mono', monospace; font-size:18px; color:var(--led); min-width:34px; text-align:center; text-shadow:0 0 6px var(--ledglow); }
+  .lbAvatar{ width:30px; height:30px; border-radius:50%; border:1px solid #000; background:#222; flex:none; }
+  .lbName{ flex:1; font-family:'Oswald'; text-transform:uppercase; letter-spacing:.5px; font-size:14px; color:var(--text);
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .lbWins{ font-family:'Share Tech Mono', monospace; font-size:16px; color:var(--good); text-shadow:0 0 6px currentColor; }
+  .lbWL{ font-family:'Share Tech Mono', monospace; font-size:11px; color:var(--muted); min-width:74px; text-align:right; }
+  .lbEmpty{ text-align:center; color:var(--muted); font-family:'Share Tech Mono', monospace; padding:20px; }
 </style>
 </head>
 <body>
@@ -344,6 +370,14 @@
 
   <!-- ===== Start menu ===== -->
   <div id="menuView">
+    <div id="acctBar">
+      <div id="acctInfo">
+        <img id="acctAvatar" hidden alt="">
+        <div id="acctText"><span id="acctName">Not signed in</span><span id="acctRecord"></span></div>
+      </div>
+      <button class="btn ghost" id="signInBtn">Sign in with Google</button>
+      <button class="btn ghost" id="signOutBtn" hidden>Sign out</button>
+    </div>
     <div class="menuTitle">Choose a mode</div>
     <div class="menuBtns">
       <button class="modeBtn" id="spBtn">
@@ -352,10 +386,18 @@
       </button>
       <button class="modeBtn" id="mpBtn">
         <span class="mIcon">🌐</span><span class="mName">Multiplayer 1v1</span>
-        <span class="mDesc">Queue up and duel a random opponent over 5 songs.</span>
+        <span class="mDesc">Sign in, queue up, and duel a random opponent over 5 songs.</span>
       </button>
     </div>
+    <button class="btn next" id="leaderboardBtn" style="margin-top:16px;width:100%;">🏆 Leaderboard</button>
     <div id="mpSetupNote" class="setupNote" hidden></div>
+  </div>
+
+  <!-- ===== Leaderboard ===== -->
+  <div id="leaderboardView" hidden>
+    <div class="lbTitle">🏆 Leaderboard — Most Wins</div>
+    <div id="lbList" class="lbList">Loading…</div>
+    <button class="btn ghost" id="lbBack" style="margin-top:14px;width:100%;">← Back to Menu</button>
   </div>
 
   <!-- ===== Matchmaking queue ===== -->
@@ -446,6 +488,7 @@
 
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script>
 (() => {
   "use strict";
@@ -515,6 +558,10 @@
         revStats=$("revStats"), revWinner=$("revWinner"),
         mpFinal=$("mpFinal"), finalWinner=$("finalWinner"), finalScores=$("finalScores"),
         rematchBtn=$("rematchBtn"), menuBtn2=$("menuBtn2");
+  // auth + leaderboard DOM
+  const acctAvatar=$("acctAvatar"), acctName=$("acctName"), acctRecord=$("acctRecord"),
+        signInBtn=$("signInBtn"), signOutBtn=$("signOutBtn"),
+        leaderboardBtn=$("leaderboardBtn"), leaderboardView=$("leaderboardView"), lbList=$("lbList"), lbBack=$("lbBack");
   const show = (el, on) => { el.hidden = !on; };
 
   // ---------- State ----------
@@ -904,9 +951,10 @@
   const headerStats = document.querySelector('.stats');
   function showMenu(){
     mode = null; cleanupMatch(); stopAllAudio();
-    show(menuView, true); show(queueView, false); show(playView, false);
+    show(menuView, true); show(queueView, false); show(playView, false); show(leaderboardView, false);
     show(headerStats, false);
     mpSetupNote.hidden = true;
+    if(fbInited) updateAcctUI();
   }
 
   function startSingle(){
@@ -929,10 +977,13 @@
   //  MULTIPLAYER (Firebase Realtime Database)
   // ============================================================
   const ALL_ARTISTS = PLAYLISTS.flatMap(p => p.artists);
-  const me = Math.random().toString(36).slice(2,10) + Date.now().toString(36);
+  let me = "guest_" + Math.random().toString(36).slice(2,10); // becomes the signed-in user's uid
   let db = null, fbInited = false;
+  let user = null;         // Firebase auth user
   let M = null;            // current match context
   let myLocked = false;
+  function myName(){ return (user && (user.displayName || user.email)) || "Player"; }
+  function myPhoto(){ return (user && user.photoURL) || ""; }
 
   function firebaseReady(){
     return !!(window.firebase && FIREBASE_CONFIG && FIREBASE_CONFIG.apiKey && FIREBASE_CONFIG.databaseURL);
@@ -947,8 +998,47 @@
     return true;
   }
 
-  function startMulti(){
+  // ---- Google authentication ----
+  function initAuth(){
+    if(!ensureFirebase() || !firebase.auth) return;
+    firebase.auth().onAuthStateChanged(u => {
+      user = u || null;
+      if(user) me = user.uid;
+      updateAcctUI();
+    });
+  }
+  async function signInWithGoogle(){
+    if(!ensureFirebase()) { showSetupNote(); return false; }
+    const provider = new firebase.auth.GoogleAuthProvider();
+    try { await firebase.auth().signInWithPopup(provider); return true; }
+    catch(e){ return false; }
+  }
+  function signOutNow(){ if(firebase.auth) firebase.auth().signOut(); }
+
+  async function updateAcctUI(){
+    if(user){
+      acctName.textContent = myName();
+      show(signInBtn, false); show(signOutBtn, true);
+      if(myPhoto()){ acctAvatar.src = myPhoto(); show(acctAvatar, true); } else show(acctAvatar, false);
+      // pull this player's record
+      try {
+        const p = (await db.ref('players/' + me).get()).val();
+        acctRecord.textContent = p ? `${p.wins||0}W · ${p.losses||0}L · ${p.games||0} games` : "0W · 0L · new player";
+      } catch(e){ acctRecord.textContent = ""; }
+    } else {
+      acctName.textContent = "Not signed in";
+      acctRecord.textContent = "Sign in to play 1v1 and rank on the leaderboard";
+      show(acctAvatar, false); show(signInBtn, true); show(signOutBtn, false);
+    }
+  }
+
+  async function startMulti(){
     if(!ensureFirebase()){ showSetupNote(); return; }
+    if(!user){
+      const ok = await signInWithGoogle();
+      if(!ok || !user) return;     // user closed the popup or sign-in not enabled
+    }
+    me = user.uid;
     mode = 'multi'; myLocked = false;
     show(menuView, false); show(queueView, true); show(playView, false);
     qTitle.textContent = "Searching for an opponent…";
@@ -974,8 +1064,8 @@
     let role = null, opp = null;
     const qref = db.ref('queue');
     qref.transaction(cur => {
-      if(cur && cur.id && cur.id !== me){ role = 'host'; opp = cur.id; return null; }     // claim the waiter
-      role = 'wait'; return { id: me, ts: Date.now() };                                    // wait for someone
+      if(cur && cur.id && cur.id !== me){ role = 'host'; opp = cur; return null; }          // claim the waiter (whole object)
+      role = 'wait'; return { id: me, name: myName(), photo: myPhoto(), ts: Date.now() };    // wait for someone
     }, (err, committed) => {
       if(mode !== 'multi') return;
       if(err || !committed){ setTimeout(() => { if(mode === 'multi') enterQueue(); }, 700); return; }
@@ -997,10 +1087,13 @@
   }
   async function hostCreateMatch(opp){
     qTitle.textContent = "Opponent found!"; qSub.textContent = "Loading 5 songs…";
+    const oppId = opp.id;
     const matchId = 'm' + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
     const mref = db.ref('matches/' + matchId);
-    await mref.set({ host: me, players: { [me]: true, [opp]: true }, state: 'loading', currentRound: 0, createdAt: Date.now() });
-    db.ref('playerMatch/' + opp).set(matchId);
+    await mref.set({ host: me,
+      players: { [me]: { name: myName(), photo: myPhoto() }, [oppId]: { name: opp.name || "Player", photo: opp.photo || "" } },
+      state: 'loading', currentRound: 0, createdAt: Date.now() });
+    db.ref('playerMatch/' + oppId).set(matchId);
     const songs = [];
     let guard = 0;
     while(songs.length < 5 && guard < 60){
@@ -1044,7 +1137,8 @@
   function runMatch(matchId, role){
     cleanupMatch();
     M = { id: matchId, role, ref: db.ref('matches/' + matchId), curRound: -1, songs: null,
-          state: null, revealed: new Set(), finished: false, oppLeftHandled: false, oppSeen: false };
+          state: null, revealed: new Set(), finished: false, oppLeftHandled: false, oppSeen: false,
+          recorded: false, oppName: "Opponent" };
     M.ref.child('present/' + me).onDisconnect().remove();
     M.ref.child('present/' + me).set(true);
     if(role === 'host'){ M.ref.onDisconnect().remove(); } // host cleans the match node if it drops
@@ -1073,6 +1167,10 @@
       show(queueView, false); show(playView, true);
       show(mpScore, true); show(trackRow, false); show(spControls, false); show(hintSP, false);
       resultEl.classList.remove("show", "perfect");
+      const oppNow = opponentId(m);
+      M.oppName = (m.players && oppNow && m.players[oppNow] && m.players[oppNow].name) || "Opponent";
+      const oppSpan = document.querySelector('#mpScore .mpTeam.opp span');
+      if(oppSpan) oppSpan.textContent = M.oppName;
       const r = m.currentRound || 0;
       const guesses = (m.rounds && m.rounds[r] && m.rounds[r].guesses) || {};
       const opp = opponentId(m);
@@ -1146,13 +1244,14 @@
     revOpp.style.left = clamp(theirs.pos, 0, 100) + "%";
     revTarget.style.left = clamp(target, 0, 100) + "%";
     const fmt = p => (p >= 0 ? "+" : "") + p + " pts";
+    const oppNm = (M && M.oppName) || "Opponent";
     revStats.innerHTML =
       `<div class="revCol"><div class="who" style="color:var(--accent)">You</div>` +
       `<div class="acc" style="color:var(--accent)">${mine.acc.toFixed(2)}%</div><div class="pts">${fmt(mine.pts)}</div></div>` +
-      `<div class="revCol"><div class="who" style="color:var(--accent2)">Opponent</div>` +
+      `<div class="revCol"><div class="who" style="color:var(--accent2)">${oppNm}</div>` +
       `<div class="acc" style="color:var(--accent2)">${theirs.acc.toFixed(2)}%</div><div class="pts">${fmt(theirs.pts)}</div></div>`;
     const w = mine.acc > theirs.acc ? 'you' : (theirs.acc > mine.acc ? 'opp' : 'tie');
-    revWinner.textContent = w === 'you' ? "🏆 You win this round!" : w === 'opp' ? "Opponent takes this round" : "Round tied";
+    revWinner.textContent = w === 'you' ? "🏆 You win this round!" : w === 'opp' ? `${oppNm} takes this round` : "Round tied";
     revWinner.style.color = w === 'you' ? "var(--good)" : w === 'opp' ? "var(--bad)" : "var(--muted)";
     updateMpTotals(r);
     // play the song back at its true tempo during the reveal
@@ -1179,13 +1278,30 @@
     show(mpControls, false); show(mpReveal, false); show(mpFinal, true); show(mpScore, true);
     const t = totals(m, 4);
     mpYouScore.textContent = t.y; mpOppScore.textContent = t.o;
-    let txt, color;
-    if(t.y > t.o){ txt = "🏆 You Win!"; color = "var(--good)"; }
-    else if(t.o > t.y){ txt = "You Lose 😬"; color = "var(--bad)"; }
-    else { txt = "It's a Tie!"; color = "var(--warn)"; }
+    let txt, color, outcome;
+    if(t.y > t.o){ txt = "🏆 You Win!"; color = "var(--good)"; outcome = 'win'; }
+    else if(t.o > t.y){ txt = "You Lose 😬"; color = "var(--bad)"; outcome = 'loss'; }
+    else { txt = "It's a Tie!"; color = "var(--warn)"; outcome = 'tie'; }
     finalWinner.textContent = txt; finalWinner.style.color = color;
-    finalScores.innerHTML = `You <b style="color:var(--accent)">${t.y}</b> &nbsp;—&nbsp; <b style="color:var(--accent2)">${t.o}</b> Opponent`;
+    const oppNm = (M && M.oppName) || "Opponent";
+    finalScores.innerHTML = `You <b style="color:var(--accent)">${t.y}</b> &nbsp;—&nbsp; <b style="color:var(--accent2)">${t.o}</b> ${oppNm}`;
     M.finished = true;
+    recordResult(outcome);
+  }
+
+  // write win/loss/games to this player's profile (once per match)
+  function recordResult(outcome){
+    if(!M || M.recorded || !user) return;
+    M.recorded = true;
+    db.ref('players/' + me).transaction(p => {
+      p = p || { wins: 0, losses: 0, games: 0 };
+      p.name = myName(); p.photo = myPhoto();
+      p.games = (p.games || 0) + 1;
+      if(outcome === 'win') p.wins = (p.wins || 0) + 1;
+      else if(outcome === 'loss') p.losses = (p.losses || 0) + 1;
+      p.updated = Date.now();
+      return p;
+    });
   }
 
   function oppLeft(){
@@ -1193,6 +1309,33 @@
     show(mpControls, false); show(mpReveal, false); show(mpFinal, true);
     finalWinner.textContent = "🏆 You Win!"; finalWinner.style.color = "var(--good)";
     finalScores.textContent = "Your opponent left the match.";
+    M.finished = true; recordResult('win');
+  }
+
+  // ---- Leaderboard ----
+  async function showLeaderboard(){
+    if(!ensureFirebase()){ showSetupNote(); return; }
+    show(menuView, false); show(queueView, false); show(playView, false); show(leaderboardView, true);
+    show(headerStats, false);
+    lbList.innerHTML = '<div class="lbEmpty">Loading…</div>';
+    try {
+      // fetch all players + rank client-side (no DB index needed)
+      const snap = await db.ref('players').get();
+      const arr = [];
+      snap.forEach(c => { const v = c.val() || {}; arr.push({ uid: c.key, name: v.name || 'Player', photo: v.photo || '', wins: v.wins || 0, losses: v.losses || 0, games: v.games || 0 }); });
+      arr.sort((a, b) => b.wins - a.wins || a.losses - b.losses || b.games - a.games);
+      arr.splice(50); // top 50
+      if(!arr.length){ lbList.innerHTML = '<div class="lbEmpty">No games played yet — be the first to win!</div>'; return; }
+      lbList.innerHTML = arr.map((p, i) => {
+        const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : ('#' + (i + 1));
+        const av = p.photo ? `<img class="lbAvatar" src="${p.photo}" alt="">` : `<div class="lbAvatar"></div>`;
+        const mine = (user && p.uid === me) ? ' me' : '';
+        const nm = String(p.name).replace(/[<>&]/g, '');
+        return `<div class="lbRow${mine}"><div class="lbRank">${medal}</div>${av}` +
+               `<div class="lbName">${nm}${mine ? ' (you)' : ''}</div>` +
+               `<div class="lbWins">${p.wins}W</div><div class="lbWL">${p.wins}-${p.losses}</div></div>`;
+      }).join('');
+    } catch(e){ lbList.innerHTML = '<div class="lbEmpty">Couldn\'t load leaderboard.</div>'; }
   }
 
   qCancel.onclick = () => {
@@ -1201,9 +1344,14 @@
   };
   rematchBtn.onclick = () => { cleanupMatch(); startMulti(); };
   menuBtn2.onclick = () => { showMenu(); };
+  signInBtn.onclick = () => { signInWithGoogle(); };
+  signOutBtn.onclick = () => { signOutNow(); };
+  leaderboardBtn.onclick = showLeaderboard;
+  lbBack.onclick = showMenu;
 
   // ---------- init ----------
   buildChips(); paintSlider(); showMenu();
+  initAuth();
 })();
 </script>
 </body>
