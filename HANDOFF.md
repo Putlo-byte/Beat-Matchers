@@ -47,6 +47,13 @@ git push                 # GitHub Pages auto-rebuilds in ~1 min
   - **Google sign-in** is enabled. Auth required for multiplayer.
 - **Custom domain:** `beatmatchers.net`, registered at **Cloudflare**. DNS = 4 A records (`185.199.108-111.153`), 4 AAAA (`2606:50c0:8000-8003::153`), `www` CNAME → `putlo-byte.github.io`. All set to **DNS only (grey cloud)** so GitHub can issue the cert. Cloudflare SSL/TLS mode should be **Full** if proxy ever turned on.
 
+## Modes (3) + recent additions
+- **Singleplayer** — solo, artist-pool playlists (Big Hits/2010s/Throwbacks/Pop Icons).
+- **Ranked** — the Google-auth 1v1 (was "Multiplayer"); matchmaking queue, live charts, wins leaderboard.
+- **Party** — link-based lobby (`?party=CODE`), up to 8 players, **no login** (pick a username), host picks song pool (charts / a category / paste a custom song list — Spotify/Apple *links* can't be read, only pasted song names), synced 5 rounds, reveal bar shows ALL players' guesses with **top 3 highlighted**, final standings. Firebase node `/parties/{CODE}`. Stall-watchdog auto-advances if a player never locks. Host leaving stalls the party (known limitation, no host migration).
+- **Dark/Light toggle** in the menu (`#themeBtn`), persisted in `localStorage.bm_theme` (default light). Dark theme = `html[data-theme="dark"]` variable overrides in the minimal skin.
+- **AdSense prereqs present:** `privacy.html` + Consent Mode v2 (in `<head>`) + cookie consent banner (before `</body>`). AdSense loader stays commented out until approval (`ca-pub-XXXX` placeholder). Verified: banner shows first visit, persists choice, privacy page loads.
+
 ## Architecture (it's one IIFE in index.html)
 - **Audio:** an `<audio>` element; tempo via `player.playbackRate` with `preservesPitch=true` (changes BPM, keeps pitch). The slider position 0–100 maps to rate via `rateFromPos(pos) = 1 + (pos-targetPos)/100`; the hidden `targetPos` (fractional) = original tempo (rate 1.0).
 - **Modes:** `mode` = `null|'single'|'multi'`. Views toggled with `show(el, on)` (null-safe). Screens: `#menuView`, `#queueView`, `#leaderboardView`, `#play` (shared by SP & MP). `showMenu()`, `startSingle()`, `startMulti()`, `showLeaderboard()`.
