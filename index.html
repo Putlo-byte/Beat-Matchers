@@ -774,7 +774,7 @@
 
   <div class="controls" id="mpControls" hidden>
     <button class="btn lock" id="mpLockBtn" disabled>Lock In Guess</button>
-    <button class="btn skip" id="mpSkipBtn" hidden disabled>Skip Song</button>
+    <button class="btn skip" id="mpSkipBtn" hidden disabled>Skip Song (1)</button>
   </div>
 
   <div class="result" id="result">
@@ -1778,7 +1778,7 @@
   function updateSkipBtn(){
     if(!mpSkipBtn || mode !== 'multi') return;
     const used = skipUsed();
-    mpSkipBtn.textContent = used ? "Skip used" : "Skip Song";
+    mpSkipBtn.textContent = used ? "Skip used (0)" : "Skip Song (1)";
     mpSkipBtn.disabled = used || myLocked || !M || M.curRound < 0;
   }
   async function mpSkip(){
