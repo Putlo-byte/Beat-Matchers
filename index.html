@@ -158,6 +158,12 @@
   .mpTeam span { font-size: 10.5px; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); }
   .mpTeam.you b { color: var(--good); } .mpTeam.opp b { color: var(--bad); }
   .mpRoundLabel { font-size: 13px; font-weight: 700; color: var(--muted); }
+  #mpSkipNote { margin: -8px auto 14px; max-width: 440px; text-align: center; font-size: 13px; font-weight: 700;
+    padding: 9px 14px; border-radius: 12px; background: rgba(251,191,36,0.14); color: var(--warn);
+    border: 1px solid var(--warn); animation: pop .25s ease; }
+  .btn.skip { background: linear-gradient(135deg, var(--warn), #f59e0b); }
+  .skipTag { display:inline-block; font-size:10px; font-weight:800; letter-spacing:.5px; text-transform:uppercase;
+    color: var(--warn); border:1px solid var(--warn); border-radius:6px; padding:1px 5px; margin-left:6px; vertical-align:middle; }
 
   /* ===== MP reveal ===== */
   #mpReveal { margin-top: 18px; }
@@ -729,6 +735,8 @@
     <div class="mpTeam opp"><b id="mpOppScore">0</b><span>Opponent</span></div>
   </div>
 
+  <div id="mpSkipNote" hidden></div>
+
   <div id="partyBar" hidden>
     <div class="mpRoundLabel" id="partyRoundLabel">Round 1 / 5</div>
     <div id="partyMini" class="partyMini"></div>
@@ -766,6 +774,7 @@
 
   <div class="controls" id="mpControls" hidden>
     <button class="btn lock" id="mpLockBtn" disabled>Lock In Guess</button>
+    <button class="btn skip" id="mpSkipBtn" hidden disabled>Skip Song</button>
   </div>
 
   <div class="result" id="result">
@@ -883,7 +892,7 @@
         qTitle=$("qTitle"), qSub=$("qSub"), qCancel=$("qCancel"),
         spControls=$("spControls"), hintSP=$("hintSP"),
         mpScore=$("mpScore"), mpYouScore=$("mpYouScore"), mpOppScore=$("mpOppScore"), mpRoundLabel=$("mpRoundLabel"),
-        mpControls=$("mpControls"), mpLockBtn=$("mpLockBtn"),
+        mpControls=$("mpControls"), mpLockBtn=$("mpLockBtn"), mpSkipBtn=$("mpSkipBtn"), mpSkipNote=$("mpSkipNote"),
         mpReveal=$("mpReveal"), revYou=$("revYou"), revOpp=$("revOpp"), revTarget=$("revTarget"),
         revStats=$("revStats"), revWinner=$("revWinner"),
         mpFinal=$("mpFinal"), finalWinner=$("finalWinner"), finalScores=$("finalScores"),
@@ -1430,7 +1439,7 @@
     // singleplayer layout
     show(headerStats, true); show(backBtn, true);
     show(mpScore, false); show(trackRow, true); show(spControls, true); show(hintSP, true);
-    show(mpControls, false); show(mpReveal, false); show(mpFinal, false);
+    show(mpControls, false); show(mpReveal, false); show(mpFinal, false); show(mpSkipBtn, false); show(mpSkipNote, false);
     resultEl.classList.remove("show", "perfect");
     score = 0; streak = 0; round = 1; scoreEl.textContent = 0; streakEl.textContent = 0;
     roundEl.textContent = 1;
@@ -1658,9 +1667,9 @@
 
   function runMatch(matchId, role){
     cleanupMatch();
-    M = { id: matchId, role, ref: db.ref('matches/' + matchId), curRound: -1, songs: null,
+    M = { id: matchId, role, ref: db.ref('matches/' + matchId), curRound: -1, curVer: 0, songs: null,
           state: null, revealed: new Set(), finished: false, oppLeftHandled: false, oppSeen: false,
-          recorded: false, oppName: "Opponent" };
+          recorded: false, replacing: false, replaceGuard: -1, oppName: "Opponent" };
     M.ref.child('present/' + me).onDisconnect().remove();
     M.ref.child('present/' + me).set(true);
     if(role === 'host'){ M.ref.onDisconnect().remove(); } // host cleans the match node if it drops
@@ -1694,11 +1703,17 @@
       const oppSpan = document.querySelector('#mpScore .mpTeam.opp span');
       if(oppSpan) oppSpan.textContent = M.oppName;
       const r = m.currentRound || 0;
-      const guesses = (m.rounds && m.rounds[r] && m.rounds[r].guesses) || {};
+      const rd = (m.rounds && m.rounds[r]) || {};
+      const ver = rd.songVer || 0;
+      const guesses = rd.guesses || {};
       const opp = opponentId(m);
       const bothIn = guesses[me] && guesses[opp];
 
       if(r !== M.curRound){ startRound(r, m); }
+      else if(ver !== M.curVer){ reloadRoundSong(r, m, ver); }
+
+      // host swaps in a fresh song whenever someone skips the one on screen
+      if(M.role === 'host') maybeHostReplaceSkip(r, ver, rd);
 
       if(bothIn && !M.revealed.has(r)){
         M.revealed.add(r);
@@ -1721,12 +1736,14 @@
 
   function startRound(r, m){
     M.curRound = r;
+    M.curVer = (m.rounds && m.rounds[r] && m.rounds[r].songVer) || 0;
     show(mpReveal, false); show(mpFinal, false); show(mpControls, true);
+    show(mpSkipNote, false); show(mpSkipBtn, true);
     mpRoundLabel.textContent = `Round ${r + 1} / 5`;
     updateMpTotals(r - 1);
     const song = m.songs[r];
     targetPos = song.targetPos; ready = true; locked = false; myLocked = false;
-    slider.disabled = false; mpLockBtn.disabled = false;
+    slider.disabled = false; mpLockBtn.disabled = false; updateSkipBtn();
     slider.value = song.startPos; lastTickPos = Math.round(song.startPos); paintSlider();
     songTitle.textContent = song.trackName; songArtist.textContent = song.artistName;
     disc.innerHTML = song.art ? `<img src="${song.art}" alt="">` : '<div class="placeholder"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg></div>';
@@ -1746,6 +1763,7 @@
   function mpLockIn(){
     if(myLocked || !M || M.curRound < 0) return;
     myLocked = true; locked = true; slider.disabled = true; mpLockBtn.disabled = true;
+    if(mpSkipBtn) mpSkipBtn.disabled = true;   // can't skip once you've committed a guess
     stopMpTimer();
     const r = M.curRound, pos = parseFloat(slider.value);
     const err = Math.abs(pos - M.songs[r].targetPos);
@@ -1754,6 +1772,82 @@
     loadNote.textContent = `Locked in ${acc.toFixed(2)}% — waiting for opponent…`;
   }
   mpLockBtn.onclick = () => { if(mode === 'party') partyLockIn(); else mpLockIn(); };
+
+  // ---- Skip: one per player. Marks the current song version for replacement. ----
+  function skipUsed(){ return !!(M && M.state && M.state.skipUsed && M.state.skipUsed[me]); }
+  function updateSkipBtn(){
+    if(!mpSkipBtn || mode !== 'multi') return;
+    const used = skipUsed();
+    mpSkipBtn.textContent = used ? "Skip used" : "Skip Song";
+    mpSkipBtn.disabled = used || myLocked || !M || M.curRound < 0;
+  }
+  async function mpSkip(){
+    if(mode !== 'multi' || !M || M.curRound < 0 || myLocked || skipUsed()) return;
+    const r = M.curRound, ver = M.curVer || 0;
+    mpSkipBtn.disabled = true;
+    loadNote.textContent = "Skipping — loading a new song…";
+    try {
+      await M.ref.update({ ['skipUsed/' + me]: true, ['rounds/' + r + '/skips/' + me]: ver });
+    } catch(e){ updateSkipBtn(); }
+  }
+  if(mpSkipBtn) mpSkipBtn.onclick = mpSkip;
+
+  // names of players whose skip targeted a given song version (for the reveal banner)
+  function skippersOf(rd, atVer){
+    const sk = (rd && rd.skips) || {}, names = [];
+    Object.keys(sk).forEach(uid => {
+      if((sk[uid] || 0) === atVer){
+        const nm = (M.state && M.state.players && M.state.players[uid] && M.state.players[uid].name);
+        names.push(uid === me ? "You" : (nm || "Opponent"));
+      }
+    });
+    return names;
+  }
+  // host only: if anyone skipped the song currently on screen, swap it for a fresh one
+  async function maybeHostReplaceSkip(r, ver, rd){
+    if(!M || M.replacing) return;
+    const sk = (rd && rd.skips) || {};
+    const pending = Object.keys(sk).some(uid => (sk[uid] || 0) === ver);
+    if(!pending || M.replaceGuard === r * 1000 + ver) return;
+    M.replaceGuard = r * 1000 + ver;           // don't fire twice for the same round+version
+    M.replacing = true;
+    const song = await resolveChartTrack();
+    if(!M){ return; }
+    if(song){
+      const upd = {};
+      upd['songs/' + r] = song;
+      upd['rounds/' + r + '/songVer'] = ver + 1;
+      upd['rounds/' + r + '/guesses'] = null;   // void any locked guesses — re-guess the new song
+      try { await M.ref.update(upd); } catch(e){}
+    }
+    M.replacing = false;
+  }
+  // a skip replaced the current round's song — reload it for this player
+  function reloadRoundSong(r, m, ver){
+    const oldVer = M.curVer;
+    M.curVer = ver;
+    const song = m.songs[r];
+    if(!song) return;
+    const who = skippersOf((m.rounds && m.rounds[r]) || {}, oldVer);
+    if(who.length){
+      mpSkipNote.textContent = who.length >= 2
+        ? "⤼ Both players skipped — new song!"
+        : (who[0] === "You" ? "⤼ You skipped — here's a new song" : `⤼ ${who[0]} skipped — here's a new song`);
+      show(mpSkipNote, true);
+    }
+    locked = false; myLocked = false; M.revealed.delete(r);
+    slider.disabled = false; mpLockBtn.disabled = false;
+    targetPos = song.targetPos; ready = true;
+    slider.value = song.startPos; lastTickPos = Math.round(song.startPos); paintSlider();
+    songTitle.textContent = song.trackName; songArtist.textContent = song.artistName;
+    disc.innerHTML = song.art ? `<img src="${song.art}" alt="">` : DISC_PLACEHOLDER;
+    loadNote.textContent = "Match the tempo by ear, then Lock In.";
+    _mpRev = null;
+    updateSkipBtn();
+    startBpmDetect(song.previewUrl);
+    mpLoadPlay(song.previewUrl);
+    startMpTimer();
+  }
 
   function scoreFor(err){
     // steep, generous reward for high accuracy so one great guess can swing a match.
@@ -2105,7 +2199,7 @@
 
   function startPartyRound(r, p){
     party.curRound = r; clearTimeout(party._watchdog);
-    show(partyReveal,false); show(partyFinal,false); show(mpControls,true);
+    show(partyReveal,false); show(partyFinal,false); show(mpControls,true); show(mpSkipBtn,false); show(mpSkipNote,false);
     partyRoundLabel.textContent = `Round ${r+1} / ${PARTY_ROUNDS}`;
     const song = p.songs[r];
     targetPos = song.targetPos; ready = true; locked = false; partyLocked = false;
