@@ -499,11 +499,90 @@
     background:var(--card); color:var(--text); display:grid; place-items:center; cursor:pointer; padding:0; }
   .backBtn:hover{ border-color:var(--text); }
 
+  /* ===== Party mode ===== */
+  .partyTitle{ font-family:'Space Grotesk'; font-weight:700; font-size:21px; letter-spacing:-.3px; text-align:center; margin:6px 0 4px; }
+  .partySub{ font-family:'Space Mono', monospace; font-size:12px; color:var(--muted); text-align:center; margin-bottom:14px; }
+  .partyErr{ font-family:'Space Mono', monospace; font-size:12px; color:var(--bad); text-align:center; margin-top:10px; }
+  .bmInput{ width:100%; font-family:'Space Grotesk'; font-size:14px; color:var(--text); background:var(--card);
+    border:1px solid var(--stroke); border-radius:9px; padding:12px 14px; outline:none; }
+  .bmInput:focus{ border-color:var(--text); }
+  select.bmInput{ cursor:pointer; -webkit-appearance:none; appearance:none; }
+  textarea.bmInput{ resize:vertical; font-family:'Space Mono', monospace; font-size:12.5px; margin-top:10px; }
+  .partyCodeRow{ display:flex; gap:10px; align-items:center; }
+  .partyCodeRow .bmInput{ font-family:'Space Mono', monospace; font-size:12.5px; }
+  .partyLabel{ font-family:'Space Mono', monospace; font-size:11px; text-transform:uppercase; letter-spacing:1px; color:var(--muted); display:block; margin-bottom:8px; }
+  #partySettings{ margin-top:16px; }
+  .partyPlayers{ display:flex; flex-wrap:wrap; gap:8px; }
+  .pPlayer{ font-family:'Space Grotesk'; font-weight:500; font-size:13px; background:var(--card); border:1px solid var(--stroke);
+    border-radius:8px; padding:7px 12px; display:flex; align-items:center; gap:7px; }
+  .pPlayer .pdot{ width:8px; height:8px; border-radius:50%; background:var(--accent); flex:0 0 8px; }
+  .pPlayer.host .pdot{ background:var(--good); }
+  .pPlayer.me{ border-color:var(--accent); }
+  #partyBar{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin:2px 0 16px;
+    background:var(--card); border:1px solid var(--stroke); border-radius:14px; padding:12px 18px; }
+  .partyMini{ display:flex; gap:14px; font-family:'Space Mono', monospace; font-size:13px; flex-wrap:wrap; justify-content:flex-end; }
+  .partyMini b{ color:var(--text); }
+  #partyTrack .revMark.pp{ width:15px; height:15px; border-radius:50%; border:2px solid #fff; background:var(--muted); opacity:.4; box-shadow:0 1px 4px rgba(0,0,0,.25); }
+  #partyTrack .revMark.pp.top{ opacity:1; width:20px; height:20px; }
+  #partyTrack .revMark.pp .tag{ display:none; }
+  #partyTrack .revMark.pp.top .tag{ display:block; font-family:'Space Grotesk'; font-weight:600; }
+
   /* small line icons sit inside buttons/labels */
   .ico{ width:15px; height:15px; display:inline-block; vertical-align:-2px; }
   .modeBtn .micon{ width:30px; height:30px; color:var(--accent); }
   .lbMedal{ width:22px; height:22px; }
+
+  /* ===== Dark theme (toggled from the menu) ===== */
+  html[data-theme="dark"]{
+    --text:#ece7dc; --muted:#928d81;
+    --accent:#ff6a3d; --accent2:#5aa9e6;
+    --good:#4ec46f; --warn:#e3a73a; --bad:#ff6a5a;
+    --stroke:#2b2b30; --card:#1b1b1f; --panel:#141417;
+    --shadow:0 18px 48px rgba(0,0,0,.55);
+  }
+  html[data-theme="dark"] body{ background:linear-gradient(180deg,#0d0d0f,#181819); }
+  html[data-theme="dark"] input[type=range]{ background:linear-gradient(90deg,var(--accent) 0%,var(--accent) var(--p,50%),#34343a var(--p,50%)); }
+  html[data-theme="dark"] .ring-bg{ stroke:#34343a; }
+  html[data-theme="dark"] .revealTrack, html[data-theme="dark"] #partyTrack{ background:#24242a; }
+  html[data-theme="dark"] .qSpinner{ border-color:#34343a; border-top-color:var(--accent); }
+  /* dark-mode contrast for the "ink" buttons/chips that flip light↔dark */
+  html[data-theme="dark"] .btn.lock{ background:#ece7dc; color:#141417; border-color:#ece7dc; }
+  html[data-theme="dark"] .chip.active{ background:#ece7dc; color:#141417; border-color:#ece7dc; }
+  html[data-theme="dark"] input[type=range]::-webkit-slider-thumb{ background:#ece7dc; }
+  html[data-theme="dark"] input[type=range]::-moz-range-thumb{ background:#ece7dc; }
+  html[data-theme="dark"] .lbRow.me{ background:#241a14; }
+  html[data-theme="dark"] .pPlayer.me, html[data-theme="dark"] .lbRow.me{ border-color:var(--accent); }
+  /* theme toggle button */
+  #themeBtn .tIcon{ width:15px; height:15px; vertical-align:-2px; margin-right:7px; }
 </style>
+<!-- ===== Google Consent Mode v2 defaults (must load before AdSense) ===== -->
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){ dataLayer.push(arguments); }
+  gtag('consent', 'default', {
+    ad_storage: 'denied',
+    ad_user_data: 'denied',
+    ad_personalization: 'denied',
+    analytics_storage: 'denied',
+    wait_for_update: 500
+  });
+  (function () {
+    try {
+      if (localStorage.getItem('bm-consent') === 'granted') {
+        gtag('consent', 'update', {
+          ad_storage: 'granted', ad_user_data: 'granted',
+          ad_personalization: 'granted', analytics_storage: 'granted'
+        });
+      }
+    } catch (e) {}
+  })();
+</script>
+<!-- AdSense loader: uncomment and set your ca-pub ID after AdSense approval -->
+<!--
+<script async
+  src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX"
+  crossorigin="anonymous"></script>
+-->
 </head>
 <body>
 <canvas id="fx"></canvas>
@@ -542,12 +621,18 @@
         <span class="mDesc">Match songs solo and chase your high score.</span>
       </button>
       <button class="modeBtn" id="mpBtn">
-        <svg class="micon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="9" r="2.8"/><circle cx="16" cy="9" r="2.8"/><path d="M3 19c0-2.8 2.2-4.5 5-4.5s5 1.7 5 4.5"/><path d="M21 19c0-2.8-2.2-4.5-5-4.5"/></svg>
-        <span class="mName">Multiplayer 1v1</span>
+        <svg class="micon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 16l2-9 5 4 5-4 2 9z"/><circle cx="12" cy="4.5" r="1.6"/></svg>
+        <span class="mName">Ranked</span>
         <span class="mDesc">Sign in, queue up, and duel a random opponent over 5 songs.</span>
+      </button>
+      <button class="modeBtn" id="partyBtn">
+        <svg class="micon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="7" cy="9" r="2.3"/><circle cx="17" cy="9" r="2.3"/><circle cx="12" cy="7" r="2.3"/><path d="M2.5 19c0-2.5 2-4 4.5-4s4.5 1.5 4.5 4"/><path d="M12.5 19c0-2.5 2-4 4.5-4s4.5 1.5 4.5 4"/></svg>
+        <span class="mName">Party</span>
+        <span class="mDesc">Invite up to 8 friends with a link. No login needed.</span>
       </button>
     </div>
     <button class="btn next" id="leaderboardBtn" style="margin-top:16px;width:100%;">Leaderboard</button>
+    <button class="btn ghost" id="themeBtn" style="margin-top:10px;width:100%;">Dark mode</button>
     <div id="mpSetupNote" class="setupNote" hidden></div>
   </div>
 
@@ -556,6 +641,50 @@
     <div class="lbTitle">Leaderboard — Most Wins</div>
     <div id="lbList" class="lbList">Loading…</div>
     <button class="btn ghost" id="lbBack" style="margin-top:14px;width:100%;">← Back to Menu</button>
+  </div>
+
+  <!-- ===== Party: join (enter username) ===== -->
+  <div id="partyJoin" hidden>
+    <div class="partyTitle" id="partyJoinTitle">Join Party</div>
+    <div class="partySub" id="partyJoinSub">Pick a name to join the party.</div>
+    <input id="partyName" class="bmInput" placeholder="Your name" maxlength="16" autocomplete="off" />
+    <div class="controls" style="margin-top:14px;">
+      <button class="btn play" id="partyJoinBtn">Join Party</button>
+      <button class="btn ghost" id="partyJoinCancel">Cancel</button>
+    </div>
+    <div class="partyErr" id="partyJoinErr" hidden></div>
+  </div>
+
+  <!-- ===== Party: lobby ===== -->
+  <div id="partyLobby" hidden>
+    <div class="partyTitle">Party Lobby</div>
+    <div class="partyCodeRow">
+      <input id="partyLink" class="bmInput" readonly />
+      <button class="btn play" id="partyCopyBtn" style="flex:0 0 auto;">Copy link</button>
+    </div>
+    <div class="partySub" id="partyLobbyHint">Share the link — players join with just a name. Up to 8.</div>
+
+    <div id="partySettings">
+      <label class="partyLabel">Song pool</label>
+      <select id="partySource" class="bmInput">
+        <option value="charts">Top Charts (live)</option>
+        <option value="Big Hits">Big Hits</option>
+        <option value="2010s">2010s</option>
+        <option value="Throwbacks">Throwbacks</option>
+        <option value="Pop Icons">Pop Icons</option>
+        <option value="custom">Custom list (paste below)</option>
+      </select>
+      <textarea id="partyCustom" class="bmInput" rows="3" placeholder="Optional: paste song names, one per line (e.g. Blinding Lights). Spotify/Apple links can't be read." hidden></textarea>
+    </div>
+
+    <div class="partyLabel" style="margin-top:14px;">Players <span id="partyCount">(0/8)</span></div>
+    <div id="partyPlayers" class="partyPlayers"></div>
+
+    <div class="controls" style="margin-top:16px;">
+      <button class="btn play" id="partyStartBtn">Start party</button>
+      <button class="btn ghost" id="partyLeaveBtn">Leave</button>
+    </div>
+    <div class="partySub" id="partyWaitHint" hidden>Waiting for the host to start…</div>
   </div>
 
   <!-- ===== Matchmaking queue ===== -->
@@ -573,6 +702,11 @@
     <div class="mpTeam you"><b id="mpYouScore">0</b><span>You</span></div>
     <div class="mpRoundLabel" id="mpRoundLabel">Round 1 / 5</div>
     <div class="mpTeam opp"><b id="mpOppScore">0</b><span>Opponent</span></div>
+  </div>
+
+  <div id="partyBar" hidden>
+    <div class="mpRoundLabel" id="partyRoundLabel">Round 1 / 5</div>
+    <div id="partyMini" class="partyMini"></div>
   </div>
 
   <div class="track-row" id="trackRow"></div>
@@ -631,8 +765,27 @@
     <div class="finalWinner" id="finalWinner"></div>
     <div class="finalScores" id="finalScores"></div>
     <div class="controls">
-      <button class="btn next" id="rematchBtn">🔁 Find New Match</button>
+      <button class="btn next" id="rematchBtn">Find new match</button>
       <button class="btn ghost" id="menuBtn2">Main Menu</button>
+    </div>
+  </div>
+
+  <!-- ===== Party round reveal (all players) ===== -->
+  <div id="partyReveal" hidden>
+    <div class="revealTrack" id="partyTrack">
+      <div class="revMark target" id="partyTarget"><span class="tag" style="color:var(--text)">Original</span></div>
+    </div>
+    <div class="revLabels"><span>Slower</span><span>Faster</span></div>
+    <div id="partyRevStats" class="lbList" style="margin-top:14px;"></div>
+  </div>
+
+  <!-- ===== Party final standings ===== -->
+  <div id="partyFinal" hidden>
+    <div class="finalWinner" id="partyWinnerTxt"></div>
+    <div id="partyFinalList" class="lbList"></div>
+    <div class="controls" style="margin-top:16px;">
+      <button class="btn next" id="partyAgainBtn">Back to lobby</button>
+      <button class="btn ghost" id="partyMenuBtn">Main Menu</button>
     </div>
   </div>
 
@@ -714,6 +867,17 @@
   const acctAvatar=$("acctAvatar"), acctName=$("acctName"), acctRecord=$("acctRecord"),
         signInBtn=$("signInBtn"), signOutBtn=$("signOutBtn"),
         leaderboardBtn=$("leaderboardBtn"), leaderboardView=$("leaderboardView"), lbList=$("lbList"), lbBack=$("lbBack");
+  // party DOM
+  const partyBtn=$("partyBtn"),
+        partyJoin=$("partyJoin"), partyJoinTitle=$("partyJoinTitle"), partyJoinSub=$("partyJoinSub"),
+        partyName=$("partyName"), partyJoinBtn=$("partyJoinBtn"), partyJoinCancel=$("partyJoinCancel"), partyJoinErr=$("partyJoinErr"),
+        partyLobby=$("partyLobby"), partyLink=$("partyLink"), partyCopyBtn=$("partyCopyBtn"), partyLobbyHint=$("partyLobbyHint"),
+        partySource=$("partySource"), partyCustom=$("partyCustom"), partyCount=$("partyCount"),
+        partyPlayers=$("partyPlayers"), partyStartBtn=$("partyStartBtn"), partyLeaveBtn=$("partyLeaveBtn"), partyWaitHint=$("partyWaitHint"),
+        partyBar=$("partyBar"), partyRoundLabel=$("partyRoundLabel"), partyMini=$("partyMini"),
+        partyReveal=$("partyReveal"), partyTrack=$("partyTrack"), partyTarget=$("partyTarget"), partyRevStats=$("partyRevStats"),
+        partyFinal=$("partyFinal"), partyWinnerTxt=$("partyWinnerTxt"), partyFinalList=$("partyFinalList"),
+        partyAgainBtn=$("partyAgainBtn"), partyMenuBtn=$("partyMenuBtn");
   const show = (el, on) => { if(el) el.hidden = !on; };
 
   // ---------- State ----------
@@ -881,7 +1045,7 @@
       if(!mpTicking) return;
       mpTimeLeft = Math.max(0, mpTimeLeft - 0.25);
       updateMpTimer();
-      if(mpTimeLeft <= 0){ mpTicking = false; if(!myLocked) mpLockIn(); }
+      if(mpTimeLeft <= 0){ mpTicking = false; if(mode === 'party'){ if(!partyLocked) partyLockIn(); } else if(!myLocked) mpLockIn(); }
     }, 250);
   }
   function stopMpTimer(){ mpTicking = false; clearInterval(mpTimerId); }
@@ -1211,8 +1375,9 @@
   const backBtn = $("backBtn");
   backBtn.onclick = showMenu;
   function showMenu(){
-    mode = null; cleanupMatch(); stopAllAudio();
+    mode = null; cleanupMatch(); leaveParty(); stopAllAudio();
     show(menuView, true); show(queueView, false); show(playView, false); show(leaderboardView, false);
+    show(partyJoin, false); show(partyLobby, false);
     show(headerStats, false); show(backBtn, false);
     mpSetupNote.hidden = true;
     if(fbInited) updateAcctUI();
@@ -1233,6 +1398,7 @@
 
   spBtn.onclick = startSingle;
   mpBtn.onclick = startMulti;
+  partyBtn.onclick = () => createParty();
 
   // ============================================================
   //  MULTIPLAYER (Firebase Realtime Database)
@@ -1243,6 +1409,16 @@
   let user = null;         // Firebase auth user
   let M = null;            // current match context
   let myLocked = false;
+  // ---- party state ----
+  let party = null;        // { code, role, ref, curRound, songs, state, revealed:Set, finished, _watchdog }
+  let partyLocked = false, myPartyName = "";
+  const PARTY_ROUNDS = 5;
+  const esc = (s) => String(s == null ? "" : s).replace(/[<>&"]/g, "");
+  const DISC_PLACEHOLDER = '<div class="placeholder"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg></div>';
+  function getPid(){
+    try { let p = localStorage.getItem('bm_pid'); if(!p){ p = 'p' + Math.random().toString(36).slice(2,11); localStorage.setItem('bm_pid', p); } return p; }
+    catch(e){ return 'p' + Math.random().toString(36).slice(2,11); }
+  }
   function myName(){ return (user && (user.displayName || user.email)) || "Player"; }
   function myPhoto(){ return (user && user.photoURL) || ""; }
 
@@ -1536,7 +1712,7 @@
     M.ref.child('rounds/' + r + '/guesses/' + me).set({ pos, acc, pts });
     loadNote.textContent = `Locked in ${acc.toFixed(2)}% — waiting for opponent…`;
   }
-  mpLockBtn.onclick = mpLockIn;
+  mpLockBtn.onclick = () => { if(mode === 'party') partyLockIn(); else mpLockIn(); };
 
   function scoreFor(err){
     // steep, generous reward for high accuracy so one great guess can swing a match.
@@ -1684,6 +1860,282 @@
     }).join('');
   }
 
+  // ============================================================
+  //  PARTY MODE (link-based lobby, up to 8, no login)
+  // ============================================================
+  let _pendingJoinCode = null;
+  function genCode(){ const A = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; let s = ""; for(let i=0;i<4;i++) s += A[Math.floor(Math.random()*A.length)]; return s; }
+  function partyLinkFor(code){ return location.origin + location.pathname + "?party=" + code; }
+  function makeSong(hit){
+    const target = randInt(28,71) + Math.random();
+    let off = randInt(20,38) * (Math.random() < 0.5 ? -1 : 1);
+    let start = clamp(target + off, 2, 98);
+    if(Math.abs(start - target) < 16) start = clamp(target + (start < target ? -20 : 20), 2, 98);
+    return { trackName: hit.trackName, artistName: hit.artistName, art: (hit.artworkUrl100||"").replace("100x100","300x300"),
+             previewUrl: hit.previewUrl, targetPos: target, startPos: start };
+  }
+  async function resolveQueryTrack(query){
+    try { const r = await itunesSearch(query, 5); const hit = r.find(x => x.previewUrl); if(!hit) return null; rememberTrack(hit.trackId); return makeSong(hit); }
+    catch(e){ return null; }
+  }
+  async function resolveArtistTrack(artists){
+    for(let a=0;a<4;a++){
+      const artist = artists[randInt(0, artists.length-1)];
+      try {
+        const r = await itunesSearch(artist, 25);
+        const fresh = r.filter(x => x.previewUrl && x.trackId && !recent.has(x.trackId));
+        const pool = fresh.length ? fresh : r.filter(x => x.previewUrl);
+        if(!pool.length) continue;
+        const hit = pool.slice(0, Math.min(12, pool.length))[randInt(0, Math.min(12, pool.length)-1)];
+        rememberTrack(hit.trackId); return makeSong(hit);
+      } catch(e){}
+    }
+    return null;
+  }
+  async function resolvePartySongs(s){
+    const songs = [];
+    if(s && s.source === 'custom'){
+      const lines = (s.custom||"").split('\n').map(x => x.trim()).filter(x => x && !/^https?:\/\//i.test(x));
+      for(const line of lines){ if(songs.length >= PARTY_ROUNDS) break; const t = await resolveQueryTrack(line); if(t) songs.push(t); }
+      let g=0; while(songs.length < PARTY_ROUNDS && g < 40){ g++; const t = await resolveChartTrack(); if(t) songs.push(t); }
+    } else if(!s || s.source === 'charts'){
+      let g=0; while(songs.length < PARTY_ROUNDS && g < 60){ g++; const t = await resolveChartTrack(); if(t) songs.push(t); }
+    } else {
+      const plist = PLAYLISTS.find(x => x.name === s.source);
+      const artists = plist ? plist.artists : ALL_ARTISTS;
+      let g=0; while(songs.length < PARTY_ROUNDS && g < 60){ g++; const t = await resolveArtistTrack(artists); if(t) songs.push(t); }
+    }
+    return songs;
+  }
+
+  function openPartyName(code){
+    if(!ensureFirebase()){ showSetupNote(); return; }
+    _pendingJoinCode = code || null;
+    mode = 'party';
+    show(menuView,false); show(playView,false); show(leaderboardView,false); show(queueView,false); show(partyLobby,false);
+    show(partyJoin,true); show(backBtn,true); show(headerStats,false);
+    partyJoinTitle.textContent = code ? ("Join party " + code) : "Create a Party";
+    partyJoinSub.textContent = code ? "Pick a name to join." : "Pick a name. You'll get a link to share.";
+    partyJoinErr.hidden = true;
+    try { partyName.value = localStorage.getItem('bm_name') || ""; } catch(e){}
+    setTimeout(() => { try { partyName.focus(); } catch(e){} }, 60);
+  }
+  function createParty(){ openPartyName(null); }
+
+  partyJoinBtn.onclick = async () => {
+    const name = (partyName.value || "").trim().slice(0,16);
+    if(!name){ partyJoinErr.textContent = "Enter a name."; partyJoinErr.hidden = false; return; }
+    try { localStorage.setItem('bm_name', name); } catch(e){}
+    myPartyName = name;
+    partyJoinBtn.disabled = true;
+    try {
+      if(_pendingJoinCode) await doJoinParty(_pendingJoinCode, name);
+      else await doCreateParty(name);
+    } finally { partyJoinBtn.disabled = false; }
+  };
+  partyJoinCancel.onclick = showMenu;
+
+  async function doCreateParty(name){
+    const pid = getPid();
+    let code = genCode();
+    try { if((await db.ref('parties/'+code).get()).exists()) code = genCode(); } catch(e){}
+    await db.ref('parties/'+code).set({
+      host: pid, state: 'lobby', createdAt: Date.now(),
+      settings: { source: 'charts', custom: '' },
+      players: { [pid]: { name, present: true } }
+    });
+    runParty(code, 'host');
+  }
+  async function doJoinParty(code, name){
+    const pid = getPid();
+    const ref = db.ref('parties/'+code);
+    const snap = await ref.get(); const p = snap.val();
+    if(!p){ partyJoinErr.textContent = "Party not found."; partyJoinErr.hidden = false; return; }
+    if(p.state && p.state !== 'lobby'){ partyJoinErr.textContent = "That party already started."; partyJoinErr.hidden = false; return; }
+    const count = p.players ? Object.keys(p.players).length : 0;
+    if(count >= 8 && !(p.players && p.players[pid])){ partyJoinErr.textContent = "Party is full (8)."; partyJoinErr.hidden = false; return; }
+    await ref.child('players/'+pid).set({ name, present: true });
+    runParty(code, p.host === pid ? 'host' : 'guest');
+  }
+
+  function runParty(code, role){
+    leaveParty();
+    mode = 'party'; partyLocked = false;
+    party = { code, role, ref: db.ref('parties/'+code), curRound: -1, songs: null, state: null, revealed: new Set(), finished: false, _watchdog: 0 };
+    const pid = getPid();
+    party.ref.child('players/'+pid+'/present').onDisconnect().set(false);
+    party.ref.child('players/'+pid+'/present').set(true);
+    party.ref.on('value', s => onPartyState(s.val()));
+  }
+  function leaveParty(){
+    if(party){
+      try { party.ref.off(); clearTimeout(party._watchdog); party.ref.child('players/'+getPid()+'/present').set(false); } catch(e){}
+      party = null;
+    }
+    partyLocked = false;
+  }
+
+  function partyTotals(p){
+    const t = {}, pl = p.players || {};
+    for(const pid in pl) t[pid] = { pid, name: pl[pid].name || 'Player', total: 0, accSum: 0, accCount: 0 };
+    if(p.rounds) for(const ri in p.rounds){ const g = p.rounds[ri].guesses; if(g) for(const pid in g){
+      if(!t[pid]) t[pid] = { pid, name: g[pid].name || 'Player', total: 0, accSum: 0, accCount: 0 };
+      t[pid].total += (g[pid].pts || 0); t[pid].accSum += (g[pid].acc || 0); t[pid].accCount++;
+    } }
+    return Object.values(t).sort((a,b) => b.total - a.total);
+  }
+  function activePartyPids(p){ const pl = p.players || {}; return Object.keys(pl).filter(id => pl[id] && pl[id].present !== false); }
+  function renderPartyMini(p){
+    const st = partyTotals(p), mine = getPid();
+    partyMini.innerHTML = st.slice(0,4).map(s => `<span>${esc(s.name)}${s.pid===mine?' (you)':''} <b>${s.total}</b></span>`).join('');
+  }
+
+  function onPartyState(p){
+    if(!party) return;
+    if(!p){ if(mode === 'party') showMenu(); return; }
+    party.state = p; if(p.songs) party.songs = p.songs;
+
+    if(p.state === 'lobby'){ renderPartyLobby(p); return; }
+
+    if(p.state === 'playing' && party.songs){
+      show(partyJoin,false); show(partyLobby,false); show(queueView,false); show(playView,true);
+      show(partyBar,true); show(mpScore,false); show(trackRow,false); show(spControls,false); show(hintSP,false); show(backBtn,true); show(headerStats,false);
+      resultEl.classList.remove("show","perfect");
+      const r = p.currentRound || 0;
+      if(r !== party.curRound) startPartyRound(r, p);
+      renderPartyMini(p);
+      const round = p.rounds && p.rounds[r];
+      const guesses = (round && round.guesses) || {};
+      const revealedFlag = round && round.revealed;
+      if(revealedFlag && !party.revealed.has(r)){
+        party.revealed.add(r); stopMpTimer(); clearTimeout(party._watchdog);
+        revealPartyRound(r, p);
+        if(party.role === 'host'){
+          setTimeout(() => { if(!party) return; if(r+1 < PARTY_ROUNDS) party.ref.update({ currentRound: r+1 }); else party.ref.update({ state: 'finished' }); }, 5500);
+        }
+      } else if(!revealedFlag){
+        if(party.role === 'host'){
+          const active = activePartyPids(p);
+          if(active.length > 0 && active.every(id => guesses[id])) party.ref.child('rounds/'+r+'/revealed').set(true);
+        }
+        if(guesses[getPid()]) loadNote.textContent = "Locked in — waiting for others…";
+      }
+    } else if(p.state === 'finished'){ showPartyFinal(p); }
+  }
+
+  function renderPartyLobby(p){
+    show(partyJoin,false); show(menuView,false); show(playView,false); show(leaderboardView,false); show(queueView,false);
+    show(partyLobby,true); show(backBtn,true); show(headerStats,false);
+    const pid = getPid(), isHost = p.host === pid;
+    partyLink.value = partyLinkFor(party.code);
+    const pl = p.players || {}, pids = Object.keys(pl);
+    partyCount.textContent = `(${pids.length}/8)`;
+    partyPlayers.innerHTML = pids.map(id => {
+      const host = id === p.host, meTag = id === pid;
+      return `<div class="pPlayer${meTag?' me':''}${host?' host':''}"><span class="pdot"></span>${esc(pl[id].name||'Player')}${meTag?' (you)':''}${host?' · host':''}</div>`;
+    }).join('');
+    const s = p.settings || {};
+    partySource.disabled = !isHost; partyCustom.disabled = !isHost;
+    if(document.activeElement !== partySource) partySource.value = s.source || 'charts';
+    show(partyCustom, (partySource.value === 'custom'));
+    if(document.activeElement !== partyCustom && typeof s.custom === 'string') partyCustom.value = s.custom;
+    show(partyStartBtn, isHost); show(partyWaitHint, !isHost);
+    partyStartBtn.disabled = pids.length < 1;
+  }
+
+  partySource.onchange = () => { if(party && party.role === 'host'){ party.ref.child('settings/source').set(partySource.value); show(partyCustom, partySource.value === 'custom'); } };
+  partyCustom.oninput = () => { if(party && party.role === 'host') party.ref.child('settings/custom').set(partyCustom.value.slice(0,2000)); };
+  partyCopyBtn.onclick = async () => {
+    try { await navigator.clipboard.writeText(partyLink.value); } catch(e){ try { partyLink.select(); document.execCommand('copy'); } catch(e2){} }
+    partyCopyBtn.textContent = "Copied!"; setTimeout(() => { partyCopyBtn.textContent = "Copy link"; }, 1500);
+  };
+  partyLeaveBtn.onclick = showMenu;
+  partyMenuBtn.onclick = showMenu;
+  partyAgainBtn.onclick = () => { if(party && party.role === 'host') party.ref.update({ state: 'lobby', currentRound: 0, songs: null, rounds: null }); };
+  partyStartBtn.onclick = async () => {
+    if(!party || party.role !== 'host') return;
+    partyStartBtn.disabled = true; partyStartBtn.textContent = "Loading songs…";
+    const songs = await resolvePartySongs((party.state && party.state.settings) || { source: 'charts', custom: '' });
+    partyStartBtn.textContent = "Start party";
+    if(!songs || !songs.length){ partyStartBtn.textContent = "Couldn't load — retry"; partyStartBtn.disabled = false; return; }
+    await party.ref.child('songs').set(songs);
+    await party.ref.update({ state: 'playing', currentRound: 0, startedAt: Date.now() });
+  };
+
+  function startPartyRound(r, p){
+    party.curRound = r; clearTimeout(party._watchdog);
+    show(partyReveal,false); show(partyFinal,false); show(mpControls,true);
+    partyRoundLabel.textContent = `Round ${r+1} / ${PARTY_ROUNDS}`;
+    const song = p.songs[r];
+    targetPos = song.targetPos; ready = true; locked = false; partyLocked = false;
+    slider.disabled = false; mpLockBtn.disabled = false;
+    slider.value = song.startPos; lastTickPos = Math.round(song.startPos); paintSlider();
+    songTitle.textContent = song.trackName; songArtist.textContent = song.artistName;
+    disc.innerHTML = song.art ? `<img src="${song.art}" alt="">` : DISC_PLACEHOLDER;
+    loadNote.textContent = "Match the tempo by ear, then Lock In.";
+    startBpmDetect(song.previewUrl); mpLoadPlay(song.previewUrl); startMpTimer();
+    if(party.role === 'host') party._watchdog = setTimeout(() => { if(party && party.curRound === r) party.ref.child('rounds/'+r+'/revealed').set(true); }, (ROUND_SECONDS + 3) * 1000);
+  }
+
+  function partyLockIn(){
+    if(partyLocked || !party || party.curRound < 0) return;
+    partyLocked = true; locked = true; slider.disabled = true; mpLockBtn.disabled = true; stopMpTimer();
+    const r = party.curRound, pos = parseFloat(slider.value);
+    const err = Math.abs(pos - party.songs[r].targetPos);
+    const acc = Math.max(0, 100 - err), pts = scoreFor(err);
+    party.ref.child('rounds/'+r+'/guesses/'+getPid()).set({ name: myPartyName, pos, acc, pts });
+    loadNote.textContent = `Locked in ${acc.toFixed(2)}% — waiting for others…`;
+  }
+
+  function revealPartyRound(r, p){
+    show(mpControls,false); show(partyReveal,true);
+    const song = p.songs[r], target = song.targetPos;
+    [...partyTrack.querySelectorAll('.revMark.pp')].forEach(n => n.remove());
+    partyTarget.style.left = clamp(target,0,100) + "%";
+    const guesses = (p.rounds && p.rounds[r] && p.rounds[r].guesses) || {}, pl = p.players || {}, mine = getPid();
+    const rows = Object.keys(guesses).map(pid => ({ pid, name: (pl[pid] && pl[pid].name) || guesses[pid].name || 'Player', pos: guesses[pid].pos, acc: guesses[pid].acc, pts: guesses[pid].pts }))
+                       .sort((a,b) => (b.acc||0) - (a.acc||0));
+    const topColors = ['var(--accent)','var(--good)','var(--accent2)'];
+    rows.forEach((row,i) => {
+      const m = document.createElement('div');
+      m.className = 'revMark pp' + (i < 3 ? ' top' : '');
+      m.style.left = clamp(row.pos,0,100) + "%";
+      if(i < 3) m.style.background = topColors[i];
+      if(row.pid === mine) m.style.borderColor = 'var(--text)';
+      const tag = document.createElement('span'); tag.className = 'tag';
+      tag.style.color = i < 3 ? topColors[i] : 'var(--muted)';
+      tag.textContent = (row.pid === mine ? 'You' : row.name);
+      m.appendChild(tag); partyTrack.appendChild(m);
+    });
+    const fmt = v => (v >= 0 ? "+" : "") + v + " pts";
+    partyRevStats.innerHTML = rows.map((row,i) => {
+      const meRow = row.pid === mine ? ' me' : '';
+      return `<div class="lbRow${meRow}"><div class="lbRank">${i+1}</div>` +
+             `<div class="lbName">${esc(row.name)}${row.pid===mine?' (you)':''}</div>` +
+             `<div class="lbAcc">${(row.acc||0).toFixed(1)}%</div><div class="lbWins">${fmt(row.pts||0)}</div></div>`;
+    }).join('') + (currentBPM ? `<div style="text-align:center;color:var(--muted);font-family:'Space Mono',monospace;font-size:12px;margin-top:8px;">Original ≈ ${Math.round(currentBPM)} BPM</div>` : "");
+    renderPartyMini(p);
+    if(!playing) mpLoadPlay(song.previewUrl);
+    animateTo(target);
+  }
+
+  function showPartyFinal(p){
+    stopMpTimer(); try{ player.pause(); }catch(e){} playing = false; if(party) clearTimeout(party._watchdog);
+    show(mpControls,false); show(partyReveal,false); show(partyBar,true); show(partyFinal,true);
+    const st = partyTotals(p), mine = getPid(), winner = st[0];
+    const isHost = party && party.role === 'host';
+    partyWinnerTxt.textContent = winner ? (winner.pid === mine ? "You win!" : `${esc(winner.name)} wins!`) : "Game over";
+    partyWinnerTxt.style.color = (winner && winner.pid === mine) ? "var(--good)" : "var(--text)";
+    partyFinalList.innerHTML = st.map((s,i) => {
+      const meRow = s.pid === mine ? ' me' : '', avg = s.accCount ? (s.accSum/s.accCount).toFixed(1) + "%" : "—";
+      return `<div class="lbRow${meRow}"><div class="lbRank">${i+1}</div>` +
+             `<div class="lbName">${esc(s.name)}${s.pid===mine?' (you)':''}</div>` +
+             `<div class="lbAcc">${avg}</div><div class="lbWins">${s.total}</div></div>`;
+    }).join('');
+    show(partyAgainBtn, isHost);
+    if(party) party.finished = true;
+  }
+
   qCancel.onclick = () => {
     if(db){ db.ref('queue').transaction(c => (c && c.id === me) ? null : c); db.ref('playerMatch/' + me).remove(); }
     showMenu();
@@ -1695,10 +2147,106 @@
   leaderboardBtn.onclick = showLeaderboard;
   lbBack.onclick = showMenu;
 
+  // ---------- theme (dark / light) ----------
+  const themeBtn = $("themeBtn");
+  function applyTheme(t){
+    const dark = t === 'dark';
+    document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+    themeBtn.textContent = dark ? 'Light mode' : 'Dark mode';
+    try { localStorage.setItem('bm_theme', dark ? 'dark' : 'light'); } catch(e){}
+  }
+  themeBtn.onclick = () => applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
+  (function(){ let t = 'light'; try { t = localStorage.getItem('bm_theme') || 'light'; } catch(e){} applyTheme(t); })();
+
   // ---------- init ----------
   buildChips(); paintSlider(); showMenu();
   initAuth();
+  // arriving via an invite link? jump to the party join screen
+  (function(){
+    try {
+      const c = (new URLSearchParams(location.search).get('party') || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0,6);
+      if(c) openPartyName(c);
+    } catch(e){}
+  })();
 })();
 </script>
+<!-- ===================== Cookie consent banner ===================== -->
+<style>
+  #bm-cc {
+    position: fixed; left: 16px; right: 16px; bottom: 16px; z-index: 9999;
+    max-width: 760px; margin: 0 auto;
+    background: #16161c; color: #e8e8ec; border: 1px solid #2a2a31;
+    border-radius: 14px; padding: 18px 20px;
+    box-shadow: 0 10px 40px rgba(0,0,0,.45);
+    font: 14px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    display: none;
+  }
+  #bm-cc.show { display: block; }
+  #bm-cc p { margin: 0 0 14px; }
+  #bm-cc a { color: #6ee7ff; }
+  #bm-cc .row { display: flex; flex-wrap: wrap; gap: 10px; }
+  #bm-cc button {
+    flex: 1 1 auto; min-width: 130px; cursor: pointer;
+    border-radius: 9px; padding: 10px 16px; font-size: 14px; font-weight: 600;
+    border: 1px solid #3a3a44; background: #23232b; color: #e8e8ec;
+  }
+  #bm-cc button.primary { background: #6ee7ff; border-color: #6ee7ff; color: #06121a; }
+  #bm-cc button:hover { filter: brightness(1.08); }
+  #bm-cc-reopen {
+    position: fixed; left: 16px; bottom: 16px; z-index: 9998;
+    background: #16161c; color: #93a0c4; border: 1px solid #2a2a31;
+    border-radius: 9px; padding: 7px 12px; font-size: 12px; cursor: pointer;
+    display: none;
+  }
+  #bm-cc-reopen.show { display: inline-block; }
+</style>
+
+<div id="bm-cc" role="dialog" aria-live="polite" aria-label="Cookie consent">
+  <p>We use cookies to run this site and to show ads. With your consent, our advertising partner (Google)
+     may use cookies to personalize ads. You can change this anytime.
+     See our <a href="/privacy.html">Privacy Policy</a>.</p>
+  <div class="row">
+    <button id="bm-cc-reject" type="button">Reject non-essential</button>
+    <button id="bm-cc-accept" type="button" class="primary">Accept all</button>
+  </div>
+</div>
+
+<button id="bm-cc-reopen" type="button">Cookie settings</button>
+
+<script>
+  (function () {
+    var KEY = 'bm-consent';
+    var banner = document.getElementById('bm-cc');
+    var reopen = document.getElementById('bm-cc-reopen');
+    function gtag(){ (window.dataLayer = window.dataLayer || []).push(arguments); }
+
+    function apply(state) {
+      var v = state === 'granted' ? 'granted' : 'denied';
+      gtag('consent', 'update', {
+        ad_storage: v, ad_user_data: v, ad_personalization: v, analytics_storage: v
+      });
+    }
+    function save(state) {
+      try { localStorage.setItem(KEY, state); } catch (e) {}
+      apply(state);
+      banner.classList.remove('show');
+      reopen.classList.add('show');
+    }
+    function stored() {
+      try { return localStorage.getItem(KEY); } catch (e) { return null; }
+    }
+
+    document.getElementById('bm-cc-accept').addEventListener('click', function(){ save('granted'); });
+    document.getElementById('bm-cc-reject').addEventListener('click', function(){ save('denied'); });
+    reopen.addEventListener('click', function(){
+      banner.classList.add('show');
+      reopen.classList.remove('show');
+    });
+
+    if (!stored()) { banner.classList.add('show'); }
+    else { reopen.classList.add('show'); }
+  })();
+</script>
+<!-- =================== end cookie consent banner =================== -->
 </body>
 </html>
