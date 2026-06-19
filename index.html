@@ -2556,7 +2556,10 @@
   async function spotifyApi(path){
     const a = await spotifyAccess(); if(!a) throw new Error('noauth');
     const r = await fetch('https://api.spotify.com/v1/' + path, { headers:{ Authorization:'Bearer ' + a } });
+    // 401 = expired token; 403 = authorized but not allowed (dev-mode 25-user cap). Clear the
+    // token either way so "reconnect" starts fresh instead of looping on a dead token.
     if(r.status === 401){ spotifyDisconnect(); throw new Error('expired'); }
+    if(r.status === 403){ spotifyDisconnect(); throw new Error('forbidden'); }
     if(!r.ok) throw new Error('api'); return await r.json();
   }
   // pull "Title Artist" strings from a tracks endpoint, following pagination
@@ -2598,6 +2601,9 @@
     refreshSpotifyUI();
   }
 
+  // shown when Spotify returns 403 = account authorized but not on the app's dev-mode allowlist
+  const SP_FORBIDDEN_MSG = "This Spotify account isn't approved yet. The app is in development mode, so only accounts the owner has added can use it — ask them to add you (Spotify Dashboard → your app → User Management), or they can request extended access.";
+
   async function importPlaylist(kind, id, name){
     spotifyPlaylistsEl.innerHTML = '<div class="lbEmpty">Importing “' + esc(name) + '”…</div>';
     const path = kind === 'top' ? 'me/top/tracks?limit=50'
@@ -2608,7 +2614,11 @@
       if(!songs.length){ spotifyPlaylistsEl.innerHTML = '<div class="lbEmpty">No playable songs found.</div>'; return; }
       applySpotifyPool(name, songs, true);
       closeSpotifySheet();
-    } catch(e){ spotifyPlaylistsEl.innerHTML = '<div class="lbEmpty">Import failed — try reconnecting.</div>'; }
+    } catch(e){
+      const msg = (e && e.message === 'forbidden') ? SP_FORBIDDEN_MSG : "Import failed — try reconnecting.";
+      spotifyPlaylistsEl.innerHTML = '<div class="lbEmpty">' + msg + '</div>';
+      refreshSpotifyUI();
+    }
   }
 
   async function openSpotifySheet(){
@@ -2620,7 +2630,10 @@
     try {
       const d = await spotifyApi('me/playlists?limit=50');
       (d.items||[]).forEach(p => { if(p && p.id) rows.push({ kind:'pl', id:p.id, name:p.name, count:(p.tracks&&p.tracks.total)||0 }); });
-    } catch(e){ if(!spotifyConnected()){ closeSpotifySheet(); refreshSpotifyUI(); return; } }
+    } catch(e){
+      if(e && e.message === 'forbidden'){ spotifyPlaylistsEl.innerHTML = '<div class="lbEmpty">' + SP_FORBIDDEN_MSG + '</div>'; refreshSpotifyUI(); return; }
+      if(!spotifyConnected()){ closeSpotifySheet(); refreshSpotifyUI(); return; }
+    }
     spotifyPlaylistsEl.innerHTML = rows.map((r,i) =>
       `<div class="plRow" data-i="${i}"><span class="plName">${esc(r.name)}</span>` +
       `<span class="plCount">${r.count!=null ? r.count + ' songs' : '★'}</span></div>`).join('');
