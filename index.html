@@ -1472,12 +1472,15 @@
   function buildChips(){
     trackRow.innerHTML = "";
     PLAYLISTS.forEach((p,i) => {
+      // Streak Rush is competitive (global leaderboard) — no custom imported pools there
+      if(mode === 'streak' && p._spotify) return;
       const c = document.createElement("div");
       c.className = "chip" + (i===poolIndex?" active":"");
       c.textContent = p.name;
       c.onclick = () => {
         poolIndex = i;
-        [...trackRow.children].forEach((ch,j)=>ch.classList.toggle("active", j===i));
+        [...trackRow.children].forEach(ch => ch.classList.remove("active"));
+        c.classList.add("active");
         round = 1; score = 0; streak = 0; scoreEl.textContent=0; streakEl.textContent=0;
         loadSong();
       };
@@ -1546,6 +1549,9 @@
     show(statStreak, which === 'streak');
     show(statSong, true);
     resultEl.classList.remove("show", "perfect");
+    // never start a Streak run on an imported (Spotify) pool — fall back to a stock one
+    if(which === 'streak' && PLAYLISTS[poolIndex] && PLAYLISTS[poolIndex]._spotify) poolIndex = 0;
+    buildChips();   // rebuild for this mode (Streak hides the Spotify chip)
     score = 0; streak = 0; round = 1; bestStreak = 0;
     scoreEl.textContent = 0; streakEl.textContent = 0; roundEl.textContent = 1;
     loadSong();
@@ -2608,7 +2614,7 @@
     if(partySpotifyOpt){ partySpotifyOpt.hidden = false; partySpotifyOpt.textContent = "♫ " + name; }
     if(switchTo) poolIndex = PLAYLISTS.length - 1;
     buildChips();
-    if(switchTo && isSolo()){ round=1; score=0; streak=0; scoreEl.textContent=0; streakEl.textContent=0; loadSong(); }
+    if(switchTo && mode === 'sandbox'){ round=1; score=0; streak=0; scoreEl.textContent=0; streakEl.textContent=0; loadSong(); }
     if(switchTo && mode === 'party' && party && party.role === 'host'){ partySource.value = 'spotify'; if(partySource.onchange) partySource.onchange(); }
     refreshSpotifyUI();
   }
