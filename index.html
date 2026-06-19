@@ -143,6 +143,23 @@
   .setupNote b { color: var(--text); } .setupNote code { background: rgba(255,255,255,0.08); padding: 1px 5px; border-radius: 5px; font-size: 11.5px; }
   .setupNote a { color: var(--accent); } .setupNote ol { margin: 8px 0 0; padding-left: 18px; } .setupNote li { margin: 4px 0; }
 
+  /* ===== Spotify connect ===== */
+  .btn.spotify { background: linear-gradient(135deg,#1ed760,#1db954); color:#08130b; }
+  #spotifyRow { margin-top: 10px; }
+  #spotifyStatus { font-size: 12px; color: var(--muted); margin-top: 6px; text-align: center; }
+  #spotifyStatus a { color: var(--accent); cursor: pointer; text-decoration: underline; }
+  .sheet { position: fixed; inset: 0; background: rgba(0,0,0,0.55); display: flex; align-items: center;
+    justify-content: center; z-index: 60; padding: 18px; }
+  .sheetCard { width: 100%; max-width: 440px; max-height: 80vh; overflow: auto; background: var(--panel, #1a1f2e);
+    border: 1px solid var(--stroke); border-radius: 16px; padding: 18px; }
+  .sheetTitle { font-size: 16px; font-weight: 800; margin-bottom: 4px; }
+  .sheetSub { font-size: 12.5px; color: var(--muted); margin-bottom: 14px; }
+  .plRow { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 11px 12px;
+    border: 1px solid var(--stroke); border-radius: 10px; margin-bottom: 8px; cursor: pointer; transition: .12s; }
+  .plRow:hover { border-color: var(--accent); }
+  .plRow .plName { font-weight: 700; font-size: 14px; }
+  .plRow .plCount { font-size: 11px; color: var(--muted); }
+
   /* ===== Matchmaking queue ===== */
   #queueView { text-align: center; padding: 38px 10px; }
   .qSpinner { width: 54px; height: 54px; margin: 0 auto 22px; border-radius: 50%;
@@ -662,7 +679,22 @@
       </button>
     </div>
     <button class="btn next" id="leaderboardBtn" style="margin-top:16px;width:100%;">Leaderboard</button>
+    <div id="spotifyRow">
+      <button class="btn spotify" id="spotifyBtn" style="width:100%;">Connect Spotify</button>
+      <div id="spotifyStatus" hidden></div>
+    </div>
     <div id="mpSetupNote" class="setupNote" hidden></div>
+    <div id="spotifySetupNote" class="setupNote" hidden></div>
+  </div>
+
+  <!-- ===== Spotify playlist picker ===== -->
+  <div id="spotifySheet" class="sheet" hidden>
+    <div class="sheetCard">
+      <div class="sheetTitle">Import a Spotify playlist</div>
+      <div class="sheetSub">We'll match your songs to 30-second previews for the game. Pick a source:</div>
+      <div id="spotifyPlaylists"><div class="lbEmpty">Loading…</div></div>
+      <button class="btn ghost" id="spotifySheetClose" style="width:100%;margin-top:8px;">Cancel</button>
+    </div>
   </div>
 
   <!-- ===== Leaderboard ===== -->
@@ -705,9 +737,11 @@
         <option value="Hip Hop">Hip Hop</option>
         <option value="R&B">R&B</option>
         <option value="Reggaeton">Reggaeton</option>
+        <option value="spotify" id="partySpotifyOpt" hidden>♫ Spotify playlist</option>
         <option value="custom">Custom list (paste below)</option>
       </select>
       <textarea id="partyCustom" class="bmInput" rows="3" placeholder="Optional: paste song names, one per line (e.g. Blinding Lights). Spotify/Apple links can't be read." hidden></textarea>
+      <button class="btn spotify" id="partySpotifyBtn" style="width:100%;margin-top:8px;">Connect Spotify</button>
     </div>
 
     <div class="partyLabel" style="margin-top:14px;">Players <span id="partyCount">(0/8)</span></div>
@@ -1181,22 +1215,26 @@
     loadNote.textContent = "Fetching a track…";
     roundEl.textContent = round;
 
-    // pick artists in random order; pull their top tracks and grab a fresh one
-    const order = shuffle(PLAYLISTS[poolIndex].artists.filter(a => a !== lastArtist));
-    if(!order.length) order.push(...PLAYLISTS[poolIndex].artists);
-    for (const artist of order){
+    // A pool is either an artist list (search each artist, pick a popular track) or a
+    // song list (Spotify import: each entry is a "Title Artist" query → match one preview).
+    const pool = PLAYLISTS[poolIndex];
+    const isSongs = !!(pool.songs && pool.songs.length);
+    const items = isSongs ? pool.songs : pool.artists;
+    const order = shuffle(items.filter(a => a !== lastArtist));
+    if(!order.length) order.push(...items);
+    for (const term of order){
       if (myToken !== loadToken) return; // superseded
       try {
-        const results = await itunesSearch(artist, 25);
+        const results = await itunesSearch(term, isSongs ? 6 : 25);
         if (myToken !== loadToken) return;
         let cands = results.filter(r => r.previewUrl && r.trackId && !recent.has(r.trackId));
         if(!cands.length) cands = results.filter(r => r.previewUrl); // fall back if all seen
         if(!cands.length) continue;
-        // pick from the most-relevant (best-known) chunk for recognizability
-        const top = cands.slice(0, Math.min(12, cands.length));
+        // song pools: take the closest (first) match; artist pools: random from the top chunk
+        const top = isSongs ? cands.slice(0, 1) : cands.slice(0, Math.min(12, cands.length));
         const hit = top[randInt(0, top.length-1)];
         rememberTrack(hit.trackId);
-        lastArtist = artist;
+        lastArtist = term;
 
         // hidden target tempo (fractional, so accuracy reads like 97.68%) + a clearly-wrong start
         targetPos = randInt(28, 71) + Math.random();
@@ -1401,9 +1439,10 @@
 
   // ---------- Playlist chips ----------
   function buildChips(){
+    trackRow.innerHTML = "";
     PLAYLISTS.forEach((p,i) => {
       const c = document.createElement("div");
-      c.className = "chip" + (i===0?" active":"");
+      c.className = "chip" + (i===poolIndex?" active":"");
       c.textContent = p.name;
       c.onclick = () => {
         poolIndex = i;
@@ -2098,7 +2137,12 @@
   }
   async function resolvePartySongs(s){
     const songs = [];
-    if(s && s.source === 'custom'){
+    if(s && s.source === 'spotify'){
+      // host's imported Spotify songs (local to the host, who is the only one resolving)
+      const list = shuffle((spImport && spImport.songs ? spImport.songs.slice() : []));
+      for(const q of list){ if(songs.length >= PARTY_ROUNDS) break; const t = await resolveQueryTrack(q); if(t) songs.push(t); }
+      let g=0; while(songs.length < PARTY_ROUNDS && g < 40){ g++; const t = await resolveChartTrack(); if(t) songs.push(t); }
+    } else if(s && s.source === 'custom'){
       const lines = (s.custom||"").split('\n').map(x => x.trim()).filter(x => x && !/^https?:\/\//i.test(x));
       for(const line of lines){ if(songs.length >= PARTY_ROUNDS) break; const t = await resolveQueryTrack(line); if(t) songs.push(t); }
       let g=0; while(songs.length < PARTY_ROUNDS && g < 40){ g++; const t = await resolveChartTrack(); if(t) songs.push(t); }
@@ -2368,9 +2412,190 @@
   themeBtn.onclick = () => applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
   (function(){ let t = 'light'; try { t = localStorage.getItem('bm_theme') || 'light'; } catch(e){} applyTheme(t); })();
 
+  // ============================================================
+  //  SPOTIFY CONNECT (read playlists → match to iTunes previews)
+  // ============================================================
+  // Spotify/Apple audio is DRM-locked and can't be tempo-warped, so we only READ the
+  // account: pull the user's playlist song names, then play the matching iTunes 30s
+  // preview (same engine the rest of the game uses). Auth is Authorization Code + PKCE
+  // (no server secret), which works on a static site.
+  const SPOTIFY_CLIENT_ID = "";   // <-- paste your Spotify app Client ID here, then redeploy
+  const SPOTIFY_SCOPES = "playlist-read-private playlist-read-collaborative user-library-read user-top-read";
+  function spotifyRedirect(){ return location.origin + location.pathname; }
+  let spImport = null;            // { name, songs:[ "Title Artist", ... ] } imported on this device
+
+  const spotifyBtn=$("spotifyBtn"), spotifyStatus=$("spotifyStatus"), spotifySetupNote=$("spotifySetupNote"),
+        spotifySheet=$("spotifySheet"), spotifyPlaylistsEl=$("spotifyPlaylists"), spotifySheetClose=$("spotifySheetClose"),
+        partySpotifyBtn=$("partySpotifyBtn"), partySpotifyOpt=$("partySpotifyOpt");
+
+  // --- PKCE helpers ---
+  function _b64url(buf){ return btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
+  function _randStr(n){ const a = new Uint8Array(n); crypto.getRandomValues(a); return Array.from(a, x => ('0'+x.toString(16)).slice(-2)).join(''); }
+  async function _sha256(s){ return await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s)); }
+
+  async function spotifyConnect(){
+    if(!SPOTIFY_CLIENT_ID){ showSpotifySetup(); showMenu(); return; }
+    const verifier = _randStr(48);
+    const challenge = _b64url(await _sha256(verifier));
+    const state = _randStr(8);
+    try { localStorage.setItem('sp_verifier', verifier); localStorage.setItem('sp_state', state); } catch(e){}
+    const p = new URLSearchParams({ response_type:'code', client_id:SPOTIFY_CLIENT_ID, scope:SPOTIFY_SCOPES,
+      redirect_uri:spotifyRedirect(), code_challenge_method:'S256', code_challenge:challenge, state });
+    location.href = 'https://accounts.spotify.com/authorize?' + p.toString();
+  }
+  async function spotifyExchange(code, verifier){
+    const body = new URLSearchParams({ grant_type:'authorization_code', code, redirect_uri:spotifyRedirect(),
+      client_id:SPOTIFY_CLIENT_ID, code_verifier:verifier });
+    const r = await fetch('https://accounts.spotify.com/api/token', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body });
+    if(!r.ok) throw new Error('token'); return await r.json();
+  }
+  async function spotifyHandleRedirect(){
+    const u = new URL(location.href);
+    const code = u.searchParams.get('code'), state = u.searchParams.get('state');
+    if(!code) return false;
+    let okState = false; try { okState = !!state && state === localStorage.getItem('sp_state'); } catch(e){}
+    u.searchParams.delete('code'); u.searchParams.delete('state'); u.searchParams.delete('error');
+    history.replaceState({}, '', u.pathname + (u.search || '') + u.hash);
+    if(!okState) return false;
+    let verifier = ''; try { verifier = localStorage.getItem('sp_verifier') || ''; } catch(e){}
+    try { spotifySaveToken(await spotifyExchange(code, verifier)); return true; } catch(e){ return false; }
+  }
+  function spotifyToken(){ try { return JSON.parse(localStorage.getItem('sp_token')); } catch(e){ return null; } }
+  function spotifySaveToken(t){
+    const cur = spotifyToken() || {};
+    const tok = { access:t.access_token, refresh:t.refresh_token || cur.refresh, exp:Date.now() + (t.expires_in||3600)*1000 - 60000 };
+    try { localStorage.setItem('sp_token', JSON.stringify(tok)); } catch(e){}
+  }
+  function spotifyConnected(){ return !!spotifyToken(); }
+  function spotifyDisconnect(){ try { localStorage.removeItem('sp_token'); } catch(e){} }
+  async function spotifyAccess(){
+    const t = spotifyToken(); if(!t) return null;
+    if(Date.now() < t.exp) return t.access;
+    if(!t.refresh) return null;
+    try {
+      const body = new URLSearchParams({ grant_type:'refresh_token', refresh_token:t.refresh, client_id:SPOTIFY_CLIENT_ID });
+      const r = await fetch('https://accounts.spotify.com/api/token', { method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body });
+      if(!r.ok) return null; spotifySaveToken(await r.json()); return (spotifyToken()||{}).access;
+    } catch(e){ return null; }
+  }
+  async function spotifyApi(path){
+    const a = await spotifyAccess(); if(!a) throw new Error('noauth');
+    const r = await fetch('https://api.spotify.com/v1/' + path, { headers:{ Authorization:'Bearer ' + a } });
+    if(r.status === 401){ spotifyDisconnect(); throw new Error('expired'); }
+    if(!r.ok) throw new Error('api'); return await r.json();
+  }
+  // pull "Title Artist" strings from a tracks endpoint, following pagination
+  async function spotifyTracks(path, max){
+    const out = [];
+    let url = path;
+    while(url && out.length < (max||60)){
+      const d = await spotifyApi(url);
+      (d.items||[]).forEach(it => { const t = (it && it.track) || it; if(t && t.name){
+        const ar = (t.artists && t.artists[0] && t.artists[0].name) || '';
+        out.push((t.name + ' ' + ar).trim());
+      }});
+      url = d.next ? d.next.replace('https://api.spotify.com/v1/','') : null;
+    }
+    return out;
+  }
+
+  function showSpotifySetup(){
+    if(!spotifySetupNote) return;
+    spotifySetupNote.hidden = false;
+    spotifySetupNote.innerHTML =
+      "<b>Spotify connect needs a one-time free setup.</b> Register an app at " +
+      "<a href='https://developer.spotify.com/dashboard' target='_blank'>developer.spotify.com/dashboard</a>, " +
+      "add the redirect URI <code>" + spotifyRedirect() + "</code> (plus your local dev URL), then paste the " +
+      "<b>Client ID</b> into <code>SPOTIFY_CLIENT_ID</code> in <code>index.html</code> and redeploy.";
+  }
+
+  // make an imported playlist available as a Singleplayer chip + a Party source
+  function applySpotifyPool(name, songs, switchTo){
+    spImport = { name, songs };
+    try { localStorage.setItem('sp_import', JSON.stringify(spImport)); } catch(e){}
+    for(let i = PLAYLISTS.length - 1; i >= 0; i--) if(PLAYLISTS[i]._spotify) PLAYLISTS.splice(i,1);
+    PLAYLISTS.push({ name: "♫ " + name, songs: songs.slice(), _spotify: true });
+    if(partySpotifyOpt){ partySpotifyOpt.hidden = false; partySpotifyOpt.textContent = "♫ " + name; }
+    if(switchTo) poolIndex = PLAYLISTS.length - 1;
+    buildChips();
+    if(switchTo && mode === 'single'){ round=1; score=0; streak=0; scoreEl.textContent=0; streakEl.textContent=0; loadSong(); }
+    if(switchTo && mode === 'party' && party && party.role === 'host'){ partySource.value = 'spotify'; if(partySource.onchange) partySource.onchange(); }
+    refreshSpotifyUI();
+  }
+
+  async function importPlaylist(kind, id, name){
+    spotifyPlaylistsEl.innerHTML = '<div class="lbEmpty">Importing “' + esc(name) + '”…</div>';
+    const path = kind === 'top' ? 'me/top/tracks?limit=50'
+               : kind === 'liked' ? 'me/tracks?limit=50'
+               : 'playlists/' + id + '/tracks?limit=100&fields=items(track(name,artists(name))),next';
+    try {
+      const songs = await spotifyTracks(path, 60);
+      if(!songs.length){ spotifyPlaylistsEl.innerHTML = '<div class="lbEmpty">No playable songs found.</div>'; return; }
+      applySpotifyPool(name, songs, true);
+      closeSpotifySheet();
+    } catch(e){ spotifyPlaylistsEl.innerHTML = '<div class="lbEmpty">Import failed — try reconnecting.</div>'; }
+  }
+
+  async function openSpotifySheet(){
+    if(!SPOTIFY_CLIENT_ID){ showSpotifySetup(); showMenu(); return; }
+    if(!spotifyConnected()){ spotifyConnect(); return; }
+    show(spotifySheet, true);
+    spotifyPlaylistsEl.innerHTML = '<div class="lbEmpty">Loading…</div>';
+    const rows = [ { kind:'top', name:'Your Top Songs' }, { kind:'liked', name:'Liked Songs' } ];
+    try {
+      const d = await spotifyApi('me/playlists?limit=50');
+      (d.items||[]).forEach(p => { if(p && p.id) rows.push({ kind:'pl', id:p.id, name:p.name, count:(p.tracks&&p.tracks.total)||0 }); });
+    } catch(e){ if(!spotifyConnected()){ closeSpotifySheet(); refreshSpotifyUI(); return; } }
+    spotifyPlaylistsEl.innerHTML = rows.map((r,i) =>
+      `<div class="plRow" data-i="${i}"><span class="plName">${esc(r.name)}</span>` +
+      `<span class="plCount">${r.count!=null ? r.count + ' songs' : '★'}</span></div>`).join('');
+    [...spotifyPlaylistsEl.querySelectorAll('.plRow')].forEach(el => {
+      el.onclick = () => { const r = rows[+el.dataset.i]; importPlaylist(r.kind, r.id, r.name); };
+    });
+  }
+  function closeSpotifySheet(){ show(spotifySheet, false); }
+
+  function refreshSpotifyUI(){
+    const conn = spotifyConnected();
+    const lbl = conn ? "Import Spotify playlist" : "Connect Spotify";
+    if(spotifyBtn) spotifyBtn.textContent = lbl;
+    if(partySpotifyBtn) partySpotifyBtn.textContent = lbl;
+    if(spotifyStatus){
+      if(conn){
+        spotifyStatus.hidden = false;
+        spotifyStatus.innerHTML = (spImport ? "Using <b>" + esc(spImport.name) + "</b> · " : "Connected · ") + "<a id='spDisc'>Disconnect</a>";
+        const d = document.getElementById('spDisc');
+        if(d) d.onclick = () => {
+          spotifyDisconnect(); spImport = null;
+          try { localStorage.removeItem('sp_import'); } catch(e){}
+          for(let i = PLAYLISTS.length - 1; i >= 0; i--) if(PLAYLISTS[i]._spotify) PLAYLISTS.splice(i,1);
+          if(poolIndex >= PLAYLISTS.length) poolIndex = 0;
+          if(partySpotifyOpt) partySpotifyOpt.hidden = true;
+          buildChips(); refreshSpotifyUI();
+        };
+      } else spotifyStatus.hidden = true;
+    }
+  }
+
+  if(spotifyBtn) spotifyBtn.onclick = openSpotifySheet;
+  if(partySpotifyBtn) partySpotifyBtn.onclick = openSpotifySheet;
+  if(spotifySheetClose) spotifySheetClose.onclick = closeSpotifySheet;
+
+  async function spotifyInit(){
+    try { const s = JSON.parse(localStorage.getItem('sp_import')); if(s && s.songs && s.songs.length) applySpotifyPool(s.name, s.songs, false); } catch(e){}
+    try {
+      if(new URLSearchParams(location.search).get('code')){
+        const ok = await spotifyHandleRedirect();
+        if(ok) openSpotifySheet();
+      }
+    } catch(e){}
+    refreshSpotifyUI();
+  }
+
   // ---------- init ----------
   buildChips(); paintSlider(); showMenu();
   initAuth();
+  spotifyInit();
   // arriving via an invite link? jump to the party join screen
   (function(){
     try {
