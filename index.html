@@ -1423,7 +1423,7 @@
   const backBtn = $("backBtn");
   backBtn.onclick = showMenu;
   function showMenu(){
-    mode = null; cleanupMatch(); leaveParty(); stopAllAudio();
+    mode = null; cleanupQueue(); cleanupMatch(); leaveParty(); stopAllAudio();
     show(menuView, true); show(queueView, false); show(playView, false); show(leaderboardView, false);
     show(partyJoin, false); show(partyLobby, false);
     show(headerStats, false); show(backBtn, false);
@@ -1544,30 +1544,64 @@
       "Singleplayer works right now without any of this.";
   }
 
-  // ---- matchmaking: one waiting slot in /queue ----
+  // ---- matchmaking: FIFO waiting list at /queue/waiting ----
+  // A single shared queue slot becomes a contention hot-spot once many players queue at
+  // once. Instead we keep a list keyed by push-id (chronological). A joiner first tries to
+  // claim the oldest waiter via a per-node transaction (claims spread across distinct keys,
+  // not one hot node). If none, it adds itself and watches two things: (a) playerMatch/me,
+  // in case a younger joiner claims it → guest; (b) the oldest few waiters, so if an OLDER
+  // entry exists it claims that → host. Only the YOUNGER of any pair ever claims, so two
+  // waiters never double-pair, and a sparse two-player queue still resolves immediately.
+  let _qEntry = null, _qListen = null, _qPmRef = null, _qClaiming = false;
+  function cleanupQueue(){
+    try { if(_qEntry){ _qEntry.onDisconnect().cancel(); _qEntry.remove(); } } catch(e){}
+    try { if(_qListen) _qListen.off('value'); } catch(e){}
+    try { if(_qPmRef) _qPmRef.off('value'); } catch(e){}
+    _qEntry = null; _qListen = null; _qPmRef = null; _qClaiming = false;
+  }
   function enterQueue(){
-    let role = null, opp = null;
-    const qref = db.ref('queue');
-    qref.transaction(cur => {
-      if(cur && cur.id && cur.id !== me){ role = 'host'; opp = cur; return null; }          // claim the waiter (whole object)
-      role = 'wait'; return { id: me, name: myName(), photo: myPhoto(), ts: Date.now() };    // wait for someone
+    cleanupQueue();
+    db.ref('queue/waiting').orderByKey().limitToFirst(12).get().then(snap => {
+      if(mode !== 'multi') return;
+      const cands = [];
+      snap.forEach(c => { const v = c.val(); if(v && v.id && v.id !== me) cands.push({ key: c.key, val: v }); });
+      tryClaimNext(cands, 0);
+    }).catch(() => { if(mode === 'multi') setTimeout(enterQueue, 800); });
+  }
+  function claim(key, onWon, onLost){
+    let got = null;
+    db.ref('queue/waiting/' + key).transaction(cur => {
+      if(cur && cur.id && cur.id !== me){ got = cur; return null; }   // claim + remove atomically
+      return cur;                                                      // already taken → leave it
     }, (err, committed) => {
       if(mode !== 'multi') return;
-      if(err || !committed){ setTimeout(() => { if(mode === 'multi') enterQueue(); }, 700); return; }
-      if(role === 'host'){ hostCreateMatch(opp); }
-      else { qref.onDisconnect().remove(); waitForMatch(qref); }
+      if(!err && committed && got) onWon(got); else onLost && onLost();
     });
   }
-  function waitForMatch(qref){
-    const pm = db.ref('playerMatch/' + me);
-    pm.on('value', s => {
+  function tryClaimNext(cands, i){
+    if(mode !== 'multi') return;
+    if(i >= cands.length){ becomeWaiter(); return; }                  // nobody to claim → wait
+    claim(cands[i].key, opp => { cleanupQueue(); hostCreateMatch(opp); }, () => tryClaimNext(cands, i + 1));
+  }
+  function becomeWaiter(){
+    _qEntry = db.ref('queue/waiting').push({ id: me, name: myName(), photo: myPhoto(), ts: Date.now() });
+    _qEntry.onDisconnect().remove();
+    const myKey = _qEntry.key;
+    // (a) a younger joiner claimed me → I'm the guest
+    _qPmRef = db.ref('playerMatch/' + me);
+    _qPmRef.on('value', s => {
       const mid = s.val();
-      if(mid && mode === 'multi'){
-        pm.off(); qref.onDisconnect().cancel();
-        db.ref('queue').transaction(c => (c && c.id === me) ? null : c);
-        db.ref('playerMatch/' + me).remove();
-        runMatch(mid, 'guest');
-      }
+      if(mid && mode === 'multi'){ cleanupQueue(); db.ref('playerMatch/' + me).remove(); runMatch(mid, 'guest'); }
+    });
+    // (b) an older waiter exists → I claim it and host (bounded read: only the oldest few)
+    _qListen = db.ref('queue/waiting').orderByKey().limitToFirst(4);
+    _qListen.on('value', s => {
+      if(mode !== 'multi' || _qClaiming || !_qEntry) return;
+      let oldest = null;
+      s.forEach(c => { if(c.key < myKey){ const v = c.val(); if(v && v.id && v.id !== me && !oldest) oldest = c.key; } });
+      if(!oldest) return;
+      _qClaiming = true;
+      claim(oldest, opp => { cleanupQueue(); hostCreateMatch(opp); }, () => { _qClaiming = false; });
     });
   }
   async function hostCreateMatch(opp){
@@ -1591,6 +1625,15 @@
     await mref.child('songs').set(songs);
     await mref.update({ state: 'playing', startedAt: Date.now() });
     runMatch(matchId, 'host');
+    // if the claimed opponent never actually connects, abandon and re-queue (don't hang forever)
+    if(M) M.joinWatch = setTimeout(() => {
+      if(M && M.role === 'host' && !M.oppSeen && !M.finished){
+        try { M.ref.remove(); } catch(e){}
+        try { db.ref('playerMatch/' + oppId).remove(); } catch(e){}
+        cleanupMatch();
+        if(mode === 'multi'){ qTitle.textContent = "Searching for an opponent…"; enterQueue(); }
+      }
+    }, 15000);
   }
 
   // ---- Live "Top Songs" chart (Apple/iTunes RSS) ----
@@ -1667,14 +1710,14 @@
     cleanupMatch();
     M = { id: matchId, role, ref: db.ref('matches/' + matchId), curRound: -1, curVer: 0, songs: null,
           state: null, revealed: new Set(), finished: false, oppLeftHandled: false, oppSeen: false,
-          recorded: false, replacing: false, replaceGuard: -1, oppName: "Opponent" };
+          recorded: false, replacing: false, replaceGuard: -1, joinWatch: null, oppName: "Opponent" };
     M.ref.child('present/' + me).onDisconnect().remove();
     M.ref.child('present/' + me).set(true);
     if(role === 'host'){ M.ref.onDisconnect().remove(); } // host cleans the match node if it drops
     M.ref.on('value', s => onMatchState(s.val()));
   }
   function cleanupMatch(){
-    if(M){ try{ M.ref.off(); M.ref.child('present/' + me).remove(); }catch(e){} M = null; }
+    if(M){ try{ clearTimeout(M.joinWatch); M.ref.off(); M.ref.child('present/' + me).remove(); }catch(e){} M = null; }
     myLocked = false;
   }
 
@@ -1686,7 +1729,7 @@
     // opponent left mid-match? (only after we've actually seen them present, to avoid a join-race false positive)
     if(m.state === 'playing' && m.present){
       const opp = opponentId(m);
-      if(opp && m.present[opp]) M.oppSeen = true;
+      if(opp && m.present[opp]){ M.oppSeen = true; if(M.joinWatch){ clearTimeout(M.joinWatch); M.joinWatch = null; } }
       if(opp && M.oppSeen && !m.present[opp] && !M.oppLeftHandled && !M.finished && M.songs){
         M.oppLeftHandled = true; oppLeft(); return;
       }
@@ -2098,11 +2141,18 @@
     const pid = getPid();
     party.ref.child('players/'+pid+'/present').onDisconnect().set(false);
     party.ref.child('players/'+pid+'/present').set(true);
+    // host owns the node — when the host drops, tear the whole party down (no host migration),
+    // which also stops abandoned parties from piling up in the DB forever
+    if(role === 'host') party.ref.onDisconnect().remove();
     party.ref.on('value', s => onPartyState(s.val()));
   }
   function leaveParty(){
     if(party){
-      try { party.ref.off(); clearTimeout(party._watchdog); party.ref.child('players/'+getPid()+'/present').set(false); } catch(e){}
+      try {
+        party.ref.off(); clearTimeout(party._watchdog);
+        if(party.role === 'host'){ party.ref.onDisconnect().cancel(); party.ref.remove(); }
+        else party.ref.child('players/'+getPid()+'/present').set(false);
+      } catch(e){}
       party = null;
     }
     partyLocked = false;
@@ -2270,7 +2320,7 @@
   }
 
   qCancel.onclick = () => {
-    if(db){ db.ref('queue').transaction(c => (c && c.id === me) ? null : c); db.ref('playerMatch/' + me).remove(); }
+    if(db){ cleanupQueue(); db.ref('playerMatch/' + me).remove(); }
     showMenu();
   };
   rematchBtn.onclick = () => { cleanupMatch(); startMulti(); };
