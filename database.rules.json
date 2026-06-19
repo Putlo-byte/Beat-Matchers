@@ -1,0 +1,50 @@
+{
+  "rules": {
+    "//": "Beat Matchers RTDB rules. Ranked paths require Firebase Auth; Party stays open by design (no login). Apply in Firebase console → Realtime Database → Rules.",
+
+    "players": {
+      ".read": true,
+      ".indexOn": ["wins"],
+      "$uid": {
+        ".write": "auth != null && auth.uid === $uid",
+        ".validate": "newData.hasChild('games')",
+        "name":     { ".validate": "newData.isString() && newData.val().length <= 60" },
+        "photo":    { ".validate": "newData.isString() && newData.val().length <= 500" },
+        "wins":     { ".validate": "newData.isNumber() && newData.val() >= 0" },
+        "losses":   { ".validate": "newData.isNumber() && newData.val() >= 0" },
+        "games":    { ".validate": "newData.isNumber() && newData.val() >= 0" },
+        "accSum":   { ".validate": "newData.isNumber() && newData.val() >= 0" },
+        "accCount": { ".validate": "newData.isNumber() && newData.val() >= 0" },
+        "updated":  { ".validate": "newData.isNumber()" },
+        "$other":   { ".validate": false }
+      }
+    },
+
+    "queue": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+
+    "playerMatch": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null"
+      }
+    },
+
+    "matches": {
+      "$mid": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    },
+
+    "parties": {
+      "//": "No auth in Party mode (localStorage pid). Per-code open access; root writes denied so nobody can wipe all parties at once. Blast radius = parties whose 4-char code you already know.",
+      "$code": {
+        ".read": true,
+        ".write": true
+      }
+    }
+  }
+}
